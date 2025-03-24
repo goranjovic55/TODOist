@@ -239,3 +239,27 @@
 ### Fixed
 - Various UI refinements in goal-related interfaces
 - Data persistence optimizations 
+
+## [2.2.0] - 2023-08-28
+
+### Added
+- Analytics & Insights Dashboard
+  - Comprehensive task metrics and statistics visualization
+  - Productivity analysis with personalized insights
+  - Interactive charts for task completion trends
+  - Category and priority distribution analytics
+  - Time-of-day productivity patterns
+  - Goal progress tracking and visualization
+  - Customizable date range filtering (day, week, month, all-time)
+  - Productivity tips based on usage patterns
+  - Streak tracking for consecutive task completion
+
+### Improved
+- Data-driven decision making for task planning
+- Visual representation of productivity patterns
+- Goal progress monitoring with integrated metrics
+- Performance tracking across different time periods
+
+### Fixed
+- Visual display optimizations for different screen sizes
+- Data calculation efficiency for large task collections 

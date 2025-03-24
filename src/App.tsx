@@ -17,6 +17,7 @@ import BackupRestorePanel from './components/backup/BackupRestorePanel';
 import TimeTrackingPanel from './components/timeTracking/TimeTrackingPanel';
 import KanbanBoard from './components/kanban/KanbanBoard';
 import GoalTracker from './components/goals/GoalTracker';
+import AnalyticsDashboard from './components/analytics/AnalyticsDashboard';
 
 // Tab panel component
 interface TabPanelProps {
@@ -79,6 +80,7 @@ const App: React.FC = () => {
           <Tab label="Time Tracking" id="app-tab-9" aria-controls="app-tabpanel-9" />
           <Tab label="Kanban Board" id="app-tab-10" aria-controls="app-tabpanel-10" />
           <Tab label="Goal Tracker" id="app-tab-11" aria-controls="app-tabpanel-11" />
+          <Tab label="Analytics" id="app-tab-12" aria-controls="app-tabpanel-12" />
         </Tabs>
       </Box>
       
@@ -164,6 +166,12 @@ const App: React.FC = () => {
       <TabPanel value={activeTab} index={11}>
         <Box sx={{ height: '100%', overflow: 'auto' }}>
           <GoalTracker />
+        </Box>
+      </TabPanel>
+      
+      <TabPanel value={activeTab} index={12}>
+        <Box sx={{ height: '100%', overflow: 'auto' }}>
+          <AnalyticsDashboard />
         </Box>
       </TabPanel>
     </Box>

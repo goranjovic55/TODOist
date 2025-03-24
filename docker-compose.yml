@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  todoist:
+    build: .
+    container_name: todoist-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    environment:
+      - NODE_ENV=development
+    command: npm run dev:react 
