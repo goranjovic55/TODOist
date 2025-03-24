@@ -20,7 +20,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Button
 } from '@mui/material';
 import {
   PieChart,
@@ -40,6 +41,9 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../stores/store';
 import { Task, Project, Group } from '../../stores/tasksSlice';
+import ReportsExport, { ExportOptions } from './ReportsExport';
+import { Download as DownloadIcon } from '@mui/icons-material';
+import { exportTasks } from '../../utils/exportUtils';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -69,6 +73,7 @@ const ReportsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [timeRange, setTimeRange] = useState('week');
   const [selectedProject, setSelectedProject] = useState('all');
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -251,11 +256,46 @@ const ReportsView: React.FC = () => {
       .slice(0, 5);  // Top 5 tags
   }, [filteredTasks]);
   
+  const handleExportClick = () => {
+    setExportDialogOpen(true);
+  };
+  
+  const handleExportClose = () => {
+    setExportDialogOpen(false);
+  };
+  
+  const handleExport = (options: ExportOptions) => {
+    console.log('Exporting report with options:', options);
+    
+    // Use the exportTasks utility function
+    exportTasks(options, tasks, projects, groups);
+  };
+  
+  // Define available report sections for export
+  const reportSections = [
+    { id: 'summary', name: 'Summary Statistics' },
+    { id: 'taskStatus', name: 'Task Status Distribution' },
+    { id: 'priority', name: 'Priority Distribution' },
+    { id: 'dayOfWeek', name: 'Activity by Day of Week' },
+    { id: 'projects', name: 'Project Progress' },
+    { id: 'tags', name: 'Tag Productivity' }
+  ];
+
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Reports & Analytics
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">
+          Reports & Analytics
+        </Typography>
+        
+        <Button 
+          variant="outlined" 
+          startIcon={<DownloadIcon />}
+          onClick={handleExportClick}
+        >
+          Export Report
+        </Button>
+      </Box>
       
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
@@ -677,6 +717,13 @@ const ReportsView: React.FC = () => {
           </Grid>
         </TabPanel>
       </Paper>
+      
+      <ReportsExport
+        open={exportDialogOpen}
+        onClose={handleExportClose}
+        onExport={handleExport}
+        availableSections={reportSections}
+      />
     </Box>
   );
 };
