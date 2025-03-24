@@ -138,4 +138,28 @@
 
 ### Fixed
 - Task format inconsistencies between services
-- Synchronization conflict handling 
+- Synchronization conflict handling
+
+## [1.8.0] - 2023-08-10
+
+### Added
+- Data Backup & Restore System
+  - Create and download backup files of application data
+  - Restore from previously created backups
+  - Selective backup of specific data types
+  - Backup encryption option
+  - Backup history tracking
+  - Auto-backup scheduling capabilities
+  - Backup file verification and validation
+  - Descriptive backup naming
+  - Cloud backup support framework
+
+### Improved
+- Data security and portability
+- User control over application data
+- Recovery options for accidental data loss
+- Application migration capabilities between devices
+
+### Fixed
+- Edge cases in data persistence
+- Storage handling for larger datasets 
