@@ -80,6 +80,41 @@ The `.model` files contain detailed design specifications for project components
    - **Content**: Various smaller components that don't warrant their own files
    - **Used**: When implementing auxiliary features
 
+## Dashboard Component Documentation
+
+The Dashboard is a central feature of the application, providing various views and analysis tools for task management:
+
+1. **TaskKanbanBoard.tsx**
+   - **Purpose**: Provides a visual task management interface with drag and drop functionality
+   - **Content**: 
+     - Draggable task cards organized into customizable status columns
+     - Work-in-progress (WIP) limits for columns to manage workflow
+     - Color-coded columns for different workflow stages
+     - Filtering options by assignee, priority, and due date
+     - Column management (add, edit, delete)
+     - Task detail view with comprehensive information
+   - **Dependencies**: 
+     - React, Material-UI for UI components
+     - react-beautiful-dnd for drag and drop functionality
+     - Redux for state management
+     - date-fns for date formatting and calculations
+   - **Update Frequency**: Periodic - when enhancing Kanban functionality
+   - **Updated By**: UI/UX developers working on task visualization
+
+2. **TaskTimeTracker.tsx**
+   - **Purpose**: Provides time tracking functionality for tasks
+   - **Content**: Timer controls, time logs, manual time entry, time visualization
+   - **Dependencies**: React, Material-UI, Redux
+   - **Update Frequency**: Periodic - when enhancing time tracking features
+   - **Updated By**: Developers working on productivity features
+
+3. **TaskStatusTracker.tsx**
+   - **Purpose**: Visualizes task status distribution and progress
+   - **Content**: Status breakdown charts, completion rates, overdue indicators
+   - **Dependencies**: React, Material-UI, Chart.js
+   - **Update Frequency**: Occasional - when improving status tracking visualizations
+   - **Updated By**: Data visualization developers
+
 ## Documentation Maintenance
 
 ### How to Update Documentation

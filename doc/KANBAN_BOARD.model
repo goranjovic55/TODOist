@@ -1,0 +1,277 @@
+# TaskKanbanBoard Component Design Document
+
+## Component Overview
+
+The TaskKanbanBoard component provides a visual task management interface using the Kanban methodology. It enables users to organize tasks into customizable columns representing different stages of a workflow, with drag-and-drop functionality for moving tasks between statuses.
+
+## Key Features
+
+1. **Drag and Drop Interface**
+   - Move tasks between workflow stages visually
+   - Automatic status updates when tasks change columns
+   - Visual feedback during drag operations
+
+2. **Customizable Columns**
+   - Create, edit, and delete columns
+   - Set work-in-progress (WIP) limits for each column
+   - Color code columns for easier visual scanning
+   - Custom column titles to match team workflow
+
+3. **Task Cards**
+   - Compact visual representation of tasks
+   - Priority indicators with color coding
+   - Due date display with overdue highlighting
+   - Assignee information
+   - Visual indicators for task status (strikethrough for completed)
+   - Quick access to detailed task information
+
+4. **Filtering Capabilities**
+   - Filter by assignee
+   - Filter by priority level
+   - Filter by due date (today, tomorrow, overdue)
+   - Multiple active filters with badge indicator
+   - Clear all filters option
+
+5. **Column Management**
+   - Column menu for accessing management functions
+   - Add column dialog with configuration options
+   - Edit existing column properties
+   - Delete columns with task redistribution
+   - Visual indicators for WIP limit status
+
+## Component Architecture
+
+### Data Structure
+
+```typescript
+// Column data structure
+interface KanbanColumn {
+  id: string;
+  title: string;
+  taskIds: string[];
+  limit?: number;
+  color?: string;
+}
+
+// Initial columns configuration
+const initialColumns: KanbanColumn[] = [
+  {
+    id: 'col-1',
+    title: 'To Do',
+    taskIds: [],
+    color: '#e0e0e0'
+  },
+  {
+    id: 'col-2',
+    title: 'In Progress',
+    taskIds: [],
+    limit: 5, // WIP Limit
+    color: '#bbdefb'
+  },
+  {
+    id: 'col-3',
+    title: 'Review',
+    taskIds: [],
+    color: '#fff9c4'
+  },
+  {
+    id: 'col-4',
+    title: 'Done',
+    taskIds: [],
+    color: '#c8e6c9'
+  }
+];
+```
+
+### State Management
+
+The component uses several state variables to manage different aspects of functionality:
+
+1. **Column State**
+   - `columns`: Array of KanbanColumn objects
+   - `columnMenuAnchorEl`: Anchor element for column menu
+   - `activeColumnId`: Currently selected column ID
+
+2. **Column Editing State**
+   - `columnDialogOpen`: Boolean for column edit dialog visibility
+   - `editingColumn`: Currently editing column or null
+   - `columnFormData`: Form data for column creation/editing
+
+3. **Task Filtering State**
+   - `filterMenuAnchorEl`: Anchor element for filter menu
+   - `filters`: Object containing current filter settings
+
+4. **Task Information State**
+   - `taskInfoDialogOpen`: Boolean for task info dialog visibility
+   - `selectedTaskId`: Currently selected task ID
+
+### Component Dependencies
+
+1. **External Libraries**
+   - React for component framework
+   - Material-UI for UI components
+   - react-beautiful-dnd for drag and drop functionality
+   - date-fns for date manipulation and formatting
+   - Redux for global state management
+
+2. **Internal Dependencies**
+   - Redux task store for accessing task data
+   - Task interfaces and types
+
+### Component Organization
+
+The component is organized into several logical sections:
+
+1. **Column Management**
+   - Functions for adding, editing, and deleting columns
+   - Column menu and dialog implementation
+
+2. **Task Filtering**
+   - Filter menu implementation
+   - Filter selection and clearing functions
+
+3. **Drag and Drop Logic**
+   - DragDropContext setup
+   - Drag end handler for task movement
+   - Column and task updates on drop
+
+4. **Task Card Rendering**
+   - Task card component with dynamic styling
+   - Task information display logic
+
+5. **Task Detail Dialog**
+   - Comprehensive task information display
+   - Task property rendering
+
+## Implementation Details
+
+### Task Organization
+
+Tasks are organized into columns based on their status:
+
+```typescript
+// Map status to column
+switch (status) {
+  case 'not_started':
+    columnId = 'col-1'; // To Do
+    break;
+  case 'in_progress':
+    columnId = 'col-2'; // In Progress
+    break;
+  case 'blocked':
+    columnId = 'col-3'; // Review
+    break;
+  case 'completed':
+    columnId = 'col-4'; // Done
+    break;
+  default:
+    columnId = 'col-1'; // Default to To Do
+}
+```
+
+### WIP Limit Enforcement
+
+Work-in-progress limits are enforced during drag operations:
+
+```typescript
+// Check if destination column has a WIP limit and if it's already reached
+if (destColumn.limit && 
+    destColumn.taskIds.length >= destColumn.limit && 
+    sourceColumn.id !== destColumn.id) {
+  // WIP limit reached, don't allow the move
+  return;
+}
+```
+
+### Task Status Updates
+
+When a task is moved between columns, its status is updated accordingly:
+
+```typescript
+// Update task status based on column
+switch (destColumn.id) {
+  case 'col-1': // To Do
+    newStatus = 'not_started';
+    break;
+  case 'col-2': // In Progress
+    newStatus = 'in_progress';
+    break;
+  case 'col-3': // Review
+    newStatus = 'blocked';
+    break;
+  case 'col-4': // Done
+    newStatus = 'completed';
+    break;
+  default:
+    newStatus = task.status;
+}
+```
+
+## Usage Guidelines
+
+### Integration with Dashboard
+
+The TaskKanbanBoard component is designed to be used as a tab in the dashboard:
+
+```tsx
+<TabPanel value={tabValue} index={8}>
+  <Grid container spacing={3}>
+    <Grid item xs={12}>
+      <TaskKanbanBoard />
+    </Grid>
+  </Grid>
+</TabPanel>
+```
+
+### Performance Considerations
+
+The component uses React's useMemo hooks for performance optimization:
+
+1. **Filtered Tasks Calculation**
+   ```typescript
+   const filteredTasks = useMemo(() => {
+     return tasks.filter(task => { /* filtering logic */ });
+   }, [tasks, filters]);
+   ```
+
+2. **Column Task Counts**
+   ```typescript
+   const columnTaskCounts = useMemo(() => {
+     const counts: Record<string, number> = {};
+     // counting logic
+     return counts;
+   }, [columns, filteredTasks]);
+   ```
+
+## Future Enhancements
+
+1. **Swimlanes for Categories**
+   - Add horizontal swimlanes for categorizing tasks
+   - Support for grouping by assignee, project, or custom fields
+
+2. **Advanced WIP Limits**
+   - Global WIP limits across all "in progress" columns
+   - Visual warnings when approaching WIP limits
+   - Configurable WIP limit policies
+
+3. **Kanban Metrics**
+   - Cycle time calculation for tasks
+   - Lead time visualization
+   - Cumulative flow diagrams
+   - Bottleneck identification
+
+4. **Board Templates**
+   - Save and load board configurations
+   - Predefined templates for common workflows
+   - Board sharing between users
+
+5. **Expanded Filtering**
+   - Advanced filter combinations
+   - Saved filters
+   - Visual highlighting of filtered items
+
+## Change History
+
+| Date       | Version | Changes                            | Author        |
+|------------|---------|-----------------------------------|---------------|
+| 2023-09-15 | 1.0.0   | Initial component implementation  | Development Team | 

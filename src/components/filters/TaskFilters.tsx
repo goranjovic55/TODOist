@@ -1,422 +1,355 @@
 import React, { useState } from 'react';
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  Button, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  Chip,
-  SelectChangeEvent,
+import {
   Box,
+  Paper,
   Typography,
-  Grid,
   TextField,
-  Autocomplete
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Button,
+  Divider,
+  SelectChangeEvent,
+  IconButton,
+  Grid,
+  Collapse
 } from '@mui/material';
+import {
+  Search as SearchIcon,
+  FilterList as FilterIcon,
+  Clear as ClearIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
+} from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { RootState } from '../../stores/store';
-import { setFilters } from '../../stores/uiSlice';
+import { setFilters, resetFilters } from '../../stores/uiSlice';
+import { TaskFilters as TaskFiltersType } from '../../stores/uiSlice';
 
-interface TaskFiltersProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-const TaskFilters: React.FC<TaskFiltersProps> = ({ open, onClose }) => {
+const TaskFilters: React.FC = () => {
   const dispatch = useDispatch();
-  const { projects, groups, tasks } = useSelector((state: RootState) => state.tasks);
-  const currentFilters = useSelector((state: RootState) => state.ui.filters);
+  const { filters } = useSelector((state: RootState) => state.ui);
+  const { projects, groups } = useSelector((state: RootState) => state.tasks);
   
-  // Filter states
-  const [status, setStatus] = useState<string[]>(currentFilters.status || []);
-  const [priority, setPriority] = useState<string[]>(currentFilters.priority || []);
-  const [projectIds, setProjectIds] = useState<string[]>(currentFilters.projectIds || []);
-  const [groupIds, setGroupIds] = useState<string[]>(currentFilters.groupIds || []);
-  const [tags, setTags] = useState<string[]>(currentFilters.tags || []);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Local state for filter values
+  const [searchText, setSearchText] = useState(filters.searchText || '');
+  const [status, setStatus] = useState<string[]>(filters.status || []);
+  const [priority, setPriority] = useState<string[]>(filters.priority || []);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>(filters.projectIds || []);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(filters.groupIds || []);
+  const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
   const [startDateFrom, setStartDateFrom] = useState<Date | null>(
-    currentFilters.startDateFrom ? new Date(currentFilters.startDateFrom) : null
+    filters.startDateFrom ? new Date(filters.startDateFrom) : null
   );
   const [startDateTo, setStartDateTo] = useState<Date | null>(
-    currentFilters.startDateTo ? new Date(currentFilters.startDateTo) : null
+    filters.startDateTo ? new Date(filters.startDateTo) : null
   );
   const [endDateFrom, setEndDateFrom] = useState<Date | null>(
-    currentFilters.endDateFrom ? new Date(currentFilters.endDateFrom) : null
+    filters.endDateFrom ? new Date(filters.endDateFrom) : null
   );
   const [endDateTo, setEndDateTo] = useState<Date | null>(
-    currentFilters.endDateTo ? new Date(currentFilters.endDateTo) : null
+    filters.endDateTo ? new Date(filters.endDateTo) : null
   );
-  const [searchText, setSearchText] = useState<string>(currentFilters.searchText || '');
   
-  // Extract all unique tags from tasks
-  const allTags = Array.from(new Set(tasks.flatMap(task => task.tags)));
-  
-  // Handle status filter change
+  // Handle changes to filter values
   const handleStatusChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value;
-    setStatus(typeof value === 'string' ? value.split(',') : value);
+    setStatus(event.target.value as string[]);
   };
   
-  // Handle priority filter change
   const handlePriorityChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value;
-    setPriority(typeof value === 'string' ? value.split(',') : value);
+    setPriority(event.target.value as string[]);
   };
   
-  // Handle project filter change
-  const handleProjectChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value;
-    const selectedProjects = typeof value === 'string' ? value.split(',') : value;
-    setProjectIds(selectedProjects);
-    
-    // If a project is deselected, also remove its groups
-    if (currentFilters.projectIds?.length > selectedProjects.length) {
-      const removedProjects = currentFilters.projectIds.filter(id => !selectedProjects.includes(id));
-      const groupsToRemove = groups
-        .filter(group => removedProjects.includes(group.parentId || ''))
-        .map(group => group.id);
-      
-      setGroupIds(prev => prev.filter(id => !groupsToRemove.includes(id)));
-    }
+  const handleProjectsChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedProjects(event.target.value as string[]);
   };
   
-  // Handle group filter change
-  const handleGroupChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value;
-    setGroupIds(typeof value === 'string' ? value.split(',') : value);
+  const handleGroupsChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedGroups(event.target.value as string[]);
   };
   
-  // Handle tag filter change
-  const handleTagsChange = (_event: React.SyntheticEvent, newValue: string[]) => {
-    setTags(newValue);
+  const handleTagsChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedTags(event.target.value as string[]);
   };
   
-  // Get filtered groups based on selected projects
-  const filteredGroups = projectIds.length > 0
-    ? groups.filter(group => projectIds.includes(group.parentId || ''))
-    : groups;
-  
-  // Apply filters
-  const handleApplyFilters = () => {
-    dispatch(setFilters({
+  // Apply the filters
+  const applyFilters = () => {
+    const newFilters: TaskFiltersType = {
+      searchText,
       status,
       priority,
-      projectIds,
-      groupIds,
-      tags,
-      startDateFrom: startDateFrom?.toISOString(),
-      startDateTo: startDateTo?.toISOString(),
-      endDateFrom: endDateFrom?.toISOString(),
-      endDateTo: endDateTo?.toISOString(),
-      searchText
-    }));
-    onClose();
+      projectIds: selectedProjects,
+      groupIds: selectedGroups,
+      tags: selectedTags,
+      startDateFrom: startDateFrom ? startDateFrom.toISOString() : null,
+      startDateTo: startDateTo ? startDateTo.toISOString() : null,
+      endDateFrom: endDateFrom ? endDateFrom.toISOString() : null,
+      endDateTo: endDateTo ? endDateTo.toISOString() : null
+    };
+    
+    dispatch(setFilters(newFilters));
   };
   
-  // Clear all filters
-  const handleClearFilters = () => {
+  // Reset all filters
+  const clearAllFilters = () => {
+    setSearchText('');
     setStatus([]);
     setPriority([]);
-    setProjectIds([]);
-    setGroupIds([]);
-    setTags([]);
+    setSelectedProjects([]);
+    setSelectedGroups([]);
+    setSelectedTags([]);
     setStartDateFrom(null);
     setStartDateTo(null);
     setEndDateFrom(null);
     setEndDateTo(null);
-    setSearchText('');
     
-    dispatch(setFilters({
-      status: [],
-      priority: [],
-      projectIds: [],
-      groupIds: [],
-      tags: [],
-      startDateFrom: null,
-      startDateTo: null,
-      endDateFrom: null,
-      endDateTo: null,
-      searchText: ''
-    }));
-    
-    onClose();
+    dispatch(resetFilters());
+  };
+  
+  // Toggle advanced filters visibility
+  const toggleAdvancedFilters = () => {
+    setShowAdvancedFilters(!showAdvancedFilters);
   };
   
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Filter Tasks</DialogTitle>
-      <DialogContent>
-        <Box sx={{ mt: 2 }}>
-          <Grid container spacing={2}>
-            {/* Text search */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Search Text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search in task title and description"
-                margin="normal"
-              />
-            </Grid>
-            
-            {/* Status filter */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  labelId="status-label"
-                  id="status"
-                  multiple
-                  value={status}
-                  onChange={handleStatusChange}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={value.replace('_', ' ')} 
-                          variant="outlined" 
-                          size="small" 
-                        />
-                      ))}
-                    </Box>
-                  )}
-                >
-                  <MenuItem value="not_started">Not Started</MenuItem>
-                  <MenuItem value="in_progress">In Progress</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="blocked">Blocked</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            {/* Priority filter */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="priority-label">Priority</InputLabel>
-                <Select
-                  labelId="priority-label"
-                  id="priority"
-                  multiple
-                  value={priority}
-                  onChange={handlePriorityChange}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={value} 
-                          variant="outlined" 
-                          size="small"
-                        />
-                      ))}
-                    </Box>
-                  )}
-                >
-                  <MenuItem value="low">Low</MenuItem>
-                  <MenuItem value="medium">Medium</MenuItem>
-                  <MenuItem value="high">High</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            {/* Project filter */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="project-label">Projects</InputLabel>
-                <Select
-                  labelId="project-label"
-                  id="project"
-                  multiple
-                  value={projectIds}
-                  onChange={handleProjectChange}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => {
-                        const project = projects.find(p => p.id === value);
-                        return (
-                          <Chip 
-                            key={value} 
-                            label={project?.name || value} 
-                            variant="outlined" 
-                            size="small"
-                          />
-                        );
-                      })}
-                    </Box>
-                  )}
-                >
-                  {projects.map((project) => (
-                    <MenuItem key={project.id} value={project.id}>
-                      {project.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            {/* Group filter */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="group-label">Groups</InputLabel>
-                <Select
-                  labelId="group-label"
-                  id="group"
-                  multiple
-                  value={groupIds}
-                  onChange={handleGroupChange}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => {
-                        const group = groups.find(g => g.id === value);
-                        return (
-                          <Chip 
-                            key={value} 
-                            label={group?.name || value} 
-                            variant="outlined" 
-                            size="small"
-                          />
-                        );
-                      })}
-                    </Box>
-                  )}
-                >
-                  {filteredGroups.map((group) => (
-                    <MenuItem key={group.id} value={group.id}>
-                      {group.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            {/* Tag filter */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle2" gutterBottom sx={{ mt: 1 }}>
-                Tags
-              </Typography>
-              <Autocomplete
+    <Paper sx={{ p: 2, mb: 2 }}>
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+        <TextField
+          fullWidth
+          placeholder="Search tasks..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+            endAdornment: searchText && (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearchText('')}>
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+          sx={{ mr: 2 }}
+        />
+        
+        <Button
+          variant="outlined"
+          startIcon={showAdvancedFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          onClick={toggleAdvancedFilters}
+        >
+          Filters
+        </Button>
+        
+        <Button
+          variant="outlined"
+          startIcon={<ClearIcon />}
+          onClick={clearAllFilters}
+          sx={{ ml: 1 }}
+        >
+          Clear
+        </Button>
+        
+        <Button
+          variant="contained"
+          onClick={applyFilters}
+          sx={{ ml: 1 }}
+        >
+          Apply
+        </Button>
+      </Box>
+      
+      <Collapse in={showAdvancedFilters}>
+        <Divider sx={{ my: 2 }} />
+        
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Status</InputLabel>
+              <Select
                 multiple
-                id="tags-filter"
-                options={allTags}
-                value={tags}
-                onChange={handleTagsChange}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    placeholder="Select tags"
-                    fullWidth
-                  />
+                value={status}
+                onChange={handleStatusChange}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {(selected as string[]).map((value) => (
+                      <Chip key={value} label={value.replace('_', ' ')} size="small" />
+                    ))}
+                  </Box>
                 )}
-                renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
-                    <Chip 
-                      variant="outlined" 
-                      label={option} 
-                      size="small" 
-                      {...getTagProps({ index })} 
-                    />
-                  ))
-                }
-              />
-            </Grid>
-            
-            {/* Date filters */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                Date Range
-              </Typography>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" gutterBottom>
-                      Start Date
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      <DatePicker
-                        label="From"
-                        value={startDateFrom}
-                        onChange={(newValue) => setStartDateFrom(newValue)}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            size: 'small',
-                            margin: 'dense'
-                          }
-                        }}
-                      />
-                      <DatePicker
-                        label="To"
-                        value={startDateTo}
-                        onChange={(newValue) => setStartDateTo(newValue)}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            size: 'small',
-                            margin: 'dense'
-                          }
-                        }}
-                      />
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" gutterBottom>
-                      Due Date
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      <DatePicker
-                        label="From"
-                        value={endDateFrom}
-                        onChange={(newValue) => setEndDateFrom(newValue)}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            size: 'small',
-                            margin: 'dense'
-                          }
-                        }}
-                      />
-                      <DatePicker
-                        label="To"
-                        value={endDateTo}
-                        onChange={(newValue) => setEndDateTo(newValue)}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            size: 'small',
-                            margin: 'dense'
-                          }
-                        }}
-                      />
-                    </Box>
-                  </Grid>
-                </Grid>
-              </LocalizationProvider>
-            </Grid>
+                label="Status"
+              >
+                <MenuItem value="not_started">Not Started</MenuItem>
+                <MenuItem value="in_progress">In Progress</MenuItem>
+                <MenuItem value="completed">Completed</MenuItem>
+                <MenuItem value="blocked">Blocked</MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClearFilters} color="inherit">
-          Clear Filters
-        </Button>
-        <Button onClick={onClose} color="inherit">
-          Cancel
-        </Button>
-        <Button onClick={handleApplyFilters} variant="contained" color="primary">
-          Apply Filters
-        </Button>
-      </DialogActions>
-    </Dialog>
+          
+          <Grid item xs={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Priority</InputLabel>
+              <Select
+                multiple
+                value={priority}
+                onChange={handlePriorityChange}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {(selected as string[]).map((value) => (
+                      <Chip key={value} label={value} size="small" />
+                    ))}
+                  </Box>
+                )}
+                label="Priority"
+              >
+                <MenuItem value="low">Low</MenuItem>
+                <MenuItem value="medium">Medium</MenuItem>
+                <MenuItem value="high">High</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          
+          <Grid item xs={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Projects</InputLabel>
+              <Select
+                multiple
+                value={selectedProjects}
+                onChange={handleProjectsChange}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {(selected as string[]).map((value) => {
+                      const project = projects.find(p => p.id === value);
+                      return project ? (
+                        <Chip key={value} label={project.name} size="small" />
+                      ) : null;
+                    })}
+                  </Box>
+                )}
+                label="Projects"
+              >
+                {projects.map(project => (
+                  <MenuItem key={project.id} value={project.id}>
+                    {project.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          
+          <Grid item xs={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Groups</InputLabel>
+              <Select
+                multiple
+                value={selectedGroups}
+                onChange={handleGroupsChange}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {(selected as string[]).map((value) => {
+                      const group = groups.find(g => g.id === value);
+                      return group ? (
+                        <Chip key={value} label={group.name} size="small" />
+                      ) : null;
+                    })}
+                  </Box>
+                )}
+                label="Groups"
+              >
+                {groups.map(group => (
+                  <MenuItem key={group.id} value={group.id}>
+                    {group.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" gutterBottom>
+              Date Range Filters
+            </Typography>
+          </Grid>
+          
+          <Grid item xs={6}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Start Date From"
+                value={startDateFrom}
+                onChange={(date) => setStartDateFrom(date)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small'
+                  }
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
+          
+          <Grid item xs={6}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Start Date To"
+                value={startDateTo}
+                onChange={(date) => setStartDateTo(date)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small'
+                  }
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
+          
+          <Grid item xs={6}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Due Date From"
+                value={endDateFrom}
+                onChange={(date) => setEndDateFrom(date)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small'
+                  }
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
+          
+          <Grid item xs={6}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Due Date To"
+                value={endDateTo}
+                onChange={(date) => setEndDateTo(date)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small'
+                  }
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
+        </Grid>
+      </Collapse>
+    </Paper>
   );
 };
 

@@ -14,19 +14,21 @@ export interface TaskFilters {
   searchText: string;
 }
 
-// Define UI state interface
-export interface UiState {
-  sidebarWidth: number;
-  detailsTabIndex: number;
-  theme: 'light' | 'dark' | 'system';
-  showCompletedTasks: boolean;
-  expandedNodes: string[];
-  searchQuery: string;
-  filters: TaskFilters;
+// Define UI state structure
+interface UIState {
+  expandedNodes: string[]; // IDs of expanded tree nodes
+  selectedItemId: string | null; // ID of the selected item
+  detailsTabIndex: number; // Current tab in task details panel
+  draggingItemId: string | null; // ID of the item being dragged
+  filters: TaskFilters; // Task filtering options
+  navMenuOpen: boolean; // Navigation menu open state (for mobile)
+  sidebarWidth: number; // Current sidebar width
+  sidebarCollapsed: boolean; // Whether sidebar is collapsed
+  darkMode: boolean; // Theme preference
 }
 
-// Initial filter state
-const initialFilters: TaskFilters = {
+// Default filters
+const defaultFilters: TaskFilters = {
   status: [],
   priority: [],
   projectIds: [],
@@ -40,14 +42,16 @@ const initialFilters: TaskFilters = {
 };
 
 // Initial state
-const initialState: UiState = {
-  sidebarWidth: 300, // Default sidebar width in pixels
-  detailsTabIndex: 0, // Default to first tab
-  theme: 'system', // Default to system theme
-  showCompletedTasks: true, // Show completed tasks by default
-  expandedNodes: [], // No nodes expanded by default
-  searchQuery: '', // No search query by default
-  filters: initialFilters
+const initialState: UIState = {
+  expandedNodes: [],
+  selectedItemId: null,
+  detailsTabIndex: 0,
+  draggingItemId: null,
+  filters: defaultFilters,
+  navMenuOpen: false,
+  sidebarWidth: 280, // Default width in pixels
+  sidebarCollapsed: false,
+  darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
 };
 
 // Create the UI slice
@@ -55,104 +59,100 @@ const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    setSidebarWidth: (state, action: PayloadAction<number>) => {
-      state.sidebarWidth = action.payload;
+    // Tree view actions
+    toggleNodeExpansion: (state, action: PayloadAction<string>) => {
+      const nodeId = action.payload;
+      const isExpanded = state.expandedNodes.includes(nodeId);
+      
+      if (isExpanded) {
+        state.expandedNodes = state.expandedNodes.filter(id => id !== nodeId);
+      } else {
+        state.expandedNodes.push(nodeId);
+      }
     },
     
+    expandNode: (state, action: PayloadAction<string>) => {
+      const nodeId = action.payload;
+      if (!state.expandedNodes.includes(nodeId)) {
+        state.expandedNodes.push(nodeId);
+      }
+    },
+    
+    collapseNode: (state, action: PayloadAction<string>) => {
+      state.expandedNodes = state.expandedNodes.filter(id => id !== action.payload);
+    },
+    
+    expandAllNodes: (state, action: PayloadAction<string[]>) => {
+      const nodeIds = action.payload;
+      state.expandedNodes = [...new Set([...state.expandedNodes, ...nodeIds])];
+    },
+    
+    collapseAllNodes: (state) => {
+      state.expandedNodes = [];
+    },
+    
+    // Selection actions
+    setSelectedItem: (state, action: PayloadAction<string | null>) => {
+      state.selectedItemId = action.payload;
+    },
+    
+    // Details panel actions
     setDetailsTabIndex: (state, action: PayloadAction<number>) => {
       state.detailsTabIndex = action.payload;
     },
     
-    setTheme: (state, action: PayloadAction<'light' | 'dark' | 'system'>) => {
-      state.theme = action.payload;
+    // Drag and drop actions
+    setDraggingItem: (state, action: PayloadAction<string | null>) => {
+      state.draggingItemId = action.payload;
     },
     
-    setShowCompletedTasks: (state, action: PayloadAction<boolean>) => {
-      state.showCompletedTasks = action.payload;
-    },
-    
-    toggleNodeExpansion: (state, action: PayloadAction<string>) => {
-      const nodeId = action.payload;
-      const index = state.expandedNodes.indexOf(nodeId);
-      
-      if (index === -1) {
-        // Node is not expanded, expand it
-        state.expandedNodes.push(nodeId);
-      } else {
-        // Node is expanded, collapse it
-        state.expandedNodes.splice(index, 1);
-      }
-    },
-    
-    expandAllNodes: (state, action: PayloadAction<string[]>) => {
-      // Expand all nodes in the payload
-      const uniqueNodeIds = new Set([...state.expandedNodes, ...action.payload]);
-      state.expandedNodes = Array.from(uniqueNodeIds);
-    },
-    
-    collapseAllNodes: (state) => {
-      // Collapse all nodes
-      state.expandedNodes = [];
-    },
-    
-    setSearchQuery: (state, action: PayloadAction<string>) => {
-      state.searchQuery = action.payload;
-    },
-    
-    // Set all filters at once
+    // Filter actions
     setFilters: (state, action: PayloadAction<TaskFilters>) => {
       state.filters = action.payload;
     },
     
-    // Set individual filter options
-    setStatusFilter: (state, action: PayloadAction<string[]>) => {
-      state.filters.status = action.payload;
-    },
-    
-    setPriorityFilter: (state, action: PayloadAction<string[]>) => {
-      state.filters.priority = action.payload;
-    },
-    
-    setProjectFilter: (state, action: PayloadAction<string[]>) => {
-      state.filters.projectIds = action.payload;
-    },
-    
-    setGroupFilter: (state, action: PayloadAction<string[]>) => {
-      state.filters.groupIds = action.payload;
-    },
-    
-    setTagsFilter: (state, action: PayloadAction<string[]>) => {
-      state.filters.tags = action.payload;
-    },
-    
-    setStartDateRangeFilter: (state, action: PayloadAction<{ from: string | null, to: string | null }>) => {
-      state.filters.startDateFrom = action.payload.from;
-      state.filters.startDateTo = action.payload.to;
-    },
-    
-    setEndDateRangeFilter: (state, action: PayloadAction<{ from: string | null, to: string | null }>) => {
-      state.filters.endDateFrom = action.payload.from;
-      state.filters.endDateTo = action.payload.to;
-    },
-    
-    setSearchTextFilter: (state, action: PayloadAction<string>) => {
-      state.filters.searchText = action.payload;
+    updateFilter: (state, action: PayloadAction<Partial<TaskFilters>>) => {
+      state.filters = {
+        ...state.filters,
+        ...action.payload
+      };
     },
     
     resetFilters: (state) => {
-      state.filters = initialFilters;
+      state.filters = defaultFilters;
+    },
+    
+    // UI layout actions
+    toggleNavMenu: (state) => {
+      state.navMenuOpen = !state.navMenuOpen;
+    },
+    
+    setSidebarWidth: (state, action: PayloadAction<number>) => {
+      state.sidebarWidth = action.payload;
+    },
+    
+    toggleSidebar: (state) => {
+      state.sidebarCollapsed = !state.sidebarCollapsed;
+    },
+    
+    // Theme actions
+    toggleDarkMode: (state) => {
+      state.darkMode = !state.darkMode;
+    },
+    
+    setDarkMode: (state, action: PayloadAction<boolean>) => {
+      state.darkMode = action.payload;
     }
   }
 });
 
 // Export actions and reducer
 export const { 
-  setSidebarWidth, setDetailsTabIndex, setTheme, setShowCompletedTasks,
-  toggleNodeExpansion, expandAllNodes, collapseAllNodes,
-  setSearchQuery, setFilters, setStatusFilter, setPriorityFilter, 
-  setProjectFilter, setGroupFilter, setTagsFilter,
-  setStartDateRangeFilter, setEndDateRangeFilter, setSearchTextFilter,
-  resetFilters
+  toggleNodeExpansion, expandNode, collapseNode, expandAllNodes, collapseAllNodes,
+  setSelectedItem, setDetailsTabIndex, setDraggingItem,
+  setFilters, updateFilter, resetFilters,
+  toggleNavMenu, setSidebarWidth, toggleSidebar,
+  toggleDarkMode, setDarkMode
 } = uiSlice.actions;
 
 export default uiSlice.reducer; 

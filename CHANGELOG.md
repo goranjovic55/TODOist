@@ -263,3 +263,73 @@
 ### Fixed
 - Visual display optimizations for different screen sizes
 - Data calculation efficiency for large task collections 
+
+## [Unreleased]
+
+
+### Update
+- Automatic update from commit script
+### Added
+- Automation scripts for development workflow:
+  - Automated commit workflow with smart file type detection
+  - Changelog update script for easy documentation
+  - Version management script for releases
+  - Documentation on using automation tools
+- Comprehensive test suite for Kanban Board component:
+  - Component rendering tests using React Testing Library
+  - Integration tests for API interactions
+  - Redux store tests for actions and reducers
+  - Custom mock implementations for external dependencies
+  - Test utilities for common testing scenarios
+- Testing infrastructure for component testing:
+  - Jest configuration for TypeScript components
+  - Custom mocks for React Beautiful DnD
+  - Type definitions for testing libraries
+  - Documentation for test strategies and best practices
+- End-to-End testing with Cypress:
+  - Custom commands for common operations
+  - Test fixtures for consistent test data
+  - Tests for critical user flows
+  - Special handling for React DnD
+  - TypeScript support for end-to-end tests
+  - Integration with GitHub Actions
+- Continuous Integration pipeline:
+  - GitHub Actions workflow for automated testing
+  - Separate jobs for unit tests and E2E tests
+  - Preview deployment for pull requests
+  - Test coverage reporting
+  - Coverage thresholds enforcement
+- Kanban board view for visual task organization
+  - Drag and drop interface for managing tasks
+  - Multiple workflow columns
+  - Task filtering capabilities
+  - Task detail view
+- Time tracking system with timer controls and manual time logging
+- Dashboard analytics with task status breakdown
+- Data export functionality in multiple formats
+- Notification system for task deadlines and mentions
+- Complete task tagging and categorization system
+
+### Changed
+- Improved dashboard UI with responsive layout
+- Enhanced task priority visualization
+- Updated navigation flow for better user experience
+- Optimized state management for better performance
+- Improved development workflow with automated testing
+- Enhanced TypeScript configuration with better type safety
+
+### Fixed
+- TypeScript errors in test files with proper type definitions
+- Task status updates now properly reflect in real-time
+- Date calculation issues in recurring tasks
+- Search functionality accuracy improvements
+- Mobile layout issues in task detail view
+
+## [0.1.0] - 2023-07-15
+
+### Added
+- Initial project setup
+- Basic task management functionality
+- Simple dashboard with task overview
+- User authentication framework
+- Task prioritization system 

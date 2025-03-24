@@ -30,7 +30,9 @@ import {
   ListItemText,
   ListItemIcon,
   ListItemSecondaryAction,
-  Chip
+  Chip,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   CloudDownload as BackupIcon,
@@ -49,6 +51,8 @@ import {
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../stores/store';
+
+import ImportExportPanel from './ImportExportPanel';
 
 // Define backup data structure
 interface BackupData {
@@ -86,6 +90,30 @@ interface AutoBackupSettings {
   encryptBackups: boolean;
   backupToCloud: boolean;
 }
+
+// TabPanel component
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`backup-tabpanel-${index}`}
+      aria-labelledby={`backup-tab-${index}`}
+    >
+      {value === index && (
+        <Box sx={{ pt: 2 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+};
 
 const BackupRestorePanel: React.FC = () => {
   // State for backup options
@@ -147,6 +175,9 @@ const BackupRestorePanel: React.FC = () => {
   // Redux state
   const tasks = useSelector((state: RootState) => state.tasks.tasks);
   const dispatch = useDispatch();
+  
+  // Add a state for the active tab
+  const [activeTab, setActiveTab] = useState(0);
   
   // Load backup history on mount
   React.useEffect(() => {
@@ -661,392 +692,420 @@ const BackupRestorePanel: React.FC = () => {
     );
   };
   
+  // Handle tab change
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
+  
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Backup & Restore
       </Typography>
       
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Backup your TODOist data to safeguard your tasks and settings or transfer them to another device.
-      </Typography>
+      <Tabs value={activeTab} onChange={handleTabChange} aria-label="backup restore tabs">
+        <Tab label="Auto Backup" id="backup-tab-0" aria-controls="backup-tabpanel-0" />
+        <Tab label="Manual Backup" id="backup-tab-1" aria-controls="backup-tabpanel-1" />
+        <Tab label="JSON Import/Export" id="backup-tab-2" aria-controls="backup-tabpanel-2" />
+      </Tabs>
       
-      <Grid container spacing={3}>
-        {/* Backup Section */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <BackupIcon color="primary" sx={{ mr: 1 }} />
-              <Typography variant="h5">
-                Create Backup
-              </Typography>
-            </Box>
-            
-            <Typography variant="body2" paragraph>
-              Create a backup file that you can store locally or use to restore your data later.
-            </Typography>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            <Typography variant="subtitle1" gutterBottom>
-              Select what to include:
-            </Typography>
-            
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={backupOptions.includeTasks}
-                      onChange={handleBackupOptionChange}
-                      name="includeTasks"
-                    />
-                  }
-                  label="Tasks"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={backupOptions.includeTags}
-                      onChange={handleBackupOptionChange}
-                      name="includeTags"
-                    />
-                  }
-                  label="Tags"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={backupOptions.includeSettings}
-                      onChange={handleBackupOptionChange}
-                      name="includeSettings"
-                    />
-                  }
-                  label="Settings"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={backupOptions.includeTemplates}
-                      onChange={handleBackupOptionChange}
-                      name="includeTemplates"
-                    />
-                  }
-                  label="Templates"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={backupOptions.includeRecurringTasks}
-                      onChange={handleBackupOptionChange}
-                      name="includeRecurringTasks"
-                    />
-                  }
-                  label="Recurring Tasks"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={backupOptions.includeIntegrations}
-                      onChange={handleBackupOptionChange}
-                      name="includeIntegrations"
-                    />
-                  }
-                  label="Integrations"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={backupOptions.includeNotifications}
-                      onChange={handleBackupOptionChange}
-                      name="includeNotifications"
-                    />
-                  }
-                  label="Notifications"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={backupOptions.includeAttachments}
-                      onChange={handleBackupOptionChange}
-                      name="includeAttachments"
-                    />
-                  }
-                  label="Attachments"
-                />
-              </Grid>
-            </Grid>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            <Typography variant="subtitle1" gutterBottom>
-              Backup options:
-            </Typography>
-            
-            <FormControlLabel
-              control={
-                <Checkbox 
-                  checked={backupOptions.encryptBackup}
-                  onChange={handleBackupOptionChange}
-                  name="encryptBackup"
-                />
-              }
-              label="Encrypt backup file"
-            />
-            
-            <TextField
-              label="Backup Description (optional)"
-              value={backupDescription}
-              onChange={(e) => setBackupDescription(e.target.value)}
-              fullWidth
-              margin="normal"
-              placeholder="E.g., Monthly backup, Pre-update backup, etc."
-            />
-            
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-              <Button
-                variant="outlined"
-                startIcon={<SettingsIcon />}
-                onClick={handleSettingsDialogOpen}
-              >
-                Auto Backup Settings
-              </Button>
-              
-              <Button
-                variant="contained"
-                startIcon={isBackupLoading ? <CircularProgress size={16} /> : <BackupIcon />}
-                onClick={handleCreateBackup}
-                disabled={isBackupLoading}
-              >
-                {isBackupLoading ? 'Creating Backup...' : 'Create Backup'}
-              </Button>
-            </Box>
-          </Paper>
-        </Grid>
+      {/* Auto Backup tab content */}
+      <TabPanel value={activeTab} index={0}>
+        <Typography variant="h4" gutterBottom>
+          Backup & Restore
+        </Typography>
         
-        {/* Restore Section */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <RestoreIcon color="primary" sx={{ mr: 1 }} />
-              <Typography variant="h5">
-                Restore Backup
+        <Typography variant="body1" color="text.secondary" paragraph>
+          Backup your TODOist data to safeguard your tasks and settings or transfer them to another device.
+        </Typography>
+        
+        <Grid container spacing={3}>
+          {/* Backup Section */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3, height: '100%' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <BackupIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h5">
+                  Create Backup
+                </Typography>
+              </Box>
+              
+              <Typography variant="body2" paragraph>
+                Create a backup file that you can store locally or use to restore your data later.
               </Typography>
-            </Box>
-            
-            <Typography variant="body2" paragraph>
-              Restore your data from a previously created backup file.
-            </Typography>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            <Box 
-              sx={{ 
-                border: '2px dashed', 
-                borderColor: 'divider', 
-                borderRadius: 1, 
-                p: 3, 
-                textAlign: 'center',
-                mb: 2
-              }}
-            >
-              <input
-                type="file"
-                accept=".json"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Typography variant="subtitle1" gutterBottom>
+                Select what to include:
+              </Typography>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={backupOptions.includeTasks}
+                        onChange={handleBackupOptionChange}
+                        name="includeTasks"
+                      />
+                    }
+                    label="Tasks"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={backupOptions.includeTags}
+                        onChange={handleBackupOptionChange}
+                        name="includeTags"
+                      />
+                    }
+                    label="Tags"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={backupOptions.includeSettings}
+                        onChange={handleBackupOptionChange}
+                        name="includeSettings"
+                      />
+                    }
+                    label="Settings"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={backupOptions.includeTemplates}
+                        onChange={handleBackupOptionChange}
+                        name="includeTemplates"
+                      />
+                    }
+                    label="Templates"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={backupOptions.includeRecurringTasks}
+                        onChange={handleBackupOptionChange}
+                        name="includeRecurringTasks"
+                      />
+                    }
+                    label="Recurring Tasks"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={backupOptions.includeIntegrations}
+                        onChange={handleBackupOptionChange}
+                        name="includeIntegrations"
+                      />
+                    }
+                    label="Integrations"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={backupOptions.includeNotifications}
+                        onChange={handleBackupOptionChange}
+                        name="includeNotifications"
+                      />
+                    }
+                    label="Notifications"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={backupOptions.includeAttachments}
+                        onChange={handleBackupOptionChange}
+                        name="includeAttachments"
+                      />
+                    }
+                    label="Attachments"
+                  />
+                </Grid>
+              </Grid>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Typography variant="subtitle1" gutterBottom>
+                Backup options:
+              </Typography>
+              
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={backupOptions.encryptBackup}
+                    onChange={handleBackupOptionChange}
+                    name="encryptBackup"
+                  />
+                }
+                label="Encrypt backup file"
               />
               
-              {selectedFile ? (
-                <Box>
-                  <CheckIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-                  <Typography variant="subtitle1" gutterBottom>
-                    {selectedFile.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {formatBytes(selectedFile.size)}
-                  </Typography>
-                  
-                  {uploadError && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                      {uploadError}
-                    </Alert>
-                  )}
-                  
-                  {fileContents && (
-                    <Box sx={{ mt: 2, textAlign: 'left' }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Backup Details:
-                      </Typography>
-                      <Box sx={{ pl: 2 }}>
-                        <Typography variant="body2">
-                          Created: {new Date(fileContents.timestamp).toLocaleString()}
-                        </Typography>
-                        <Typography variant="body2">
-                          Version: {fileContents.version}
-                        </Typography>
-                        <Typography variant="body2">
-                          Tasks: {fileContents.tasks?.length || 0}
-                        </Typography>
-                        {fileContents.description && (
-                          <Typography variant="body2">
-                            Description: {fileContents.description}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  )}
-                  
-                  <Box sx={{ mt: 2 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        setSelectedFile(null);
-                        setFileContents(null);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = '';
-                        }
-                      }}
-                      sx={{ mr: 1 }}
-                    >
-                      Remove
-                    </Button>
+              <TextField
+                label="Backup Description (optional)"
+                value={backupDescription}
+                onChange={(e) => setBackupDescription(e.target.value)}
+                fullWidth
+                margin="normal"
+                placeholder="E.g., Monthly backup, Pre-update backup, etc."
+              />
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<SettingsIcon />}
+                  onClick={handleSettingsDialogOpen}
+                >
+                  Auto Backup Settings
+                </Button>
+                
+                <Button
+                  variant="contained"
+                  startIcon={isBackupLoading ? <CircularProgress size={16} /> : <BackupIcon />}
+                  onClick={handleCreateBackup}
+                  disabled={isBackupLoading}
+                >
+                  {isBackupLoading ? 'Creating Backup...' : 'Create Backup'}
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+          
+          {/* Restore Section */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3, height: '100%' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <RestoreIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h5">
+                  Restore Backup
+                </Typography>
+              </Box>
+              
+              <Typography variant="body2" paragraph>
+                Restore your data from a previously created backup file.
+              </Typography>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Box 
+                sx={{ 
+                  border: '2px dashed', 
+                  borderColor: 'divider', 
+                  borderRadius: 1, 
+                  p: 3, 
+                  textAlign: 'center',
+                  mb: 2
+                }}
+              >
+                <input
+                  type="file"
+                  accept=".json"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+                
+                {selectedFile ? (
+                  <Box>
+                    <CheckIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
+                    <Typography variant="subtitle1" gutterBottom>
+                      {selectedFile.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formatBytes(selectedFile.size)}
+                    </Typography>
                     
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleConfirmDialogOpen('restore')}
-                      disabled={!fileContents || isRestoreLoading}
-                    >
-                      {isRestoreLoading ? (
-                        <>
-                          <CircularProgress size={16} sx={{ mr: 1 }} />
-                          Restoring...
-                        </>
-                      ) : 'Restore Now'}
-                    </Button>
-                  </Box>
-                </Box>
-              ) : (
-                <Box>
-                  <CloudUpload color="action" sx={{ fontSize: 40, mb: 1 }} />
-                  <Typography variant="subtitle1" gutterBottom>
-                    Drop your backup file here
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    or
-                  </Typography>
-                  <Button 
-                    variant="outlined" 
-                    onClick={handleFileInputClick}
-                  >
-                    Select Backup File
-                  </Button>
-                </Box>
-              )}
-            </Box>
-            
-            <Alert severity="warning">
-              <Typography variant="body2">
-                Restoring a backup will overwrite your current data. Make sure to create a backup of your current data first.
-              </Typography>
-            </Alert>
-          </Paper>
-        </Grid>
-        
-        {/* Backup History Section */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <HistoryIcon color="primary" sx={{ mr: 1 }} />
-              <Typography variant="h5">
-                Backup History
-              </Typography>
-            </Box>
-            
-            <Divider sx={{ mb: 2 }} />
-            
-            {backupHistory.length === 0 ? (
-              <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                No backup history available
-              </Typography>
-            ) : (
-              <List>
-                {backupHistory.map(backup => (
-                  <ListItem 
-                    key={backup.id}
-                    sx={{ 
-                      mb: 1, 
-                      border: 1, 
-                      borderColor: 'divider', 
-                      borderRadius: 1
-                    }}
-                  >
-                    <ListItemIcon>
-                      {backup.location === 'cloud' ? <CloudIcon /> : <DataIcon />}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Typography variant="subtitle1">
-                            {backup.filename}
+                    {uploadError && (
+                      <Alert severity="error" sx={{ mt: 2 }}>
+                        {uploadError}
+                      </Alert>
+                    )}
+                    
+                    {fileContents && (
+                      <Box sx={{ mt: 2, textAlign: 'left' }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Backup Details:
+                        </Typography>
+                        <Box sx={{ pl: 2 }}>
+                          <Typography variant="body2">
+                            Created: {new Date(fileContents.timestamp).toLocaleString()}
                           </Typography>
-                          {backup.isAutoBackup && (
-                            <Chip 
-                              label="Auto" 
-                              size="small" 
-                              color="info" 
-                              sx={{ ml: 1 }}
-                            />
+                          <Typography variant="body2">
+                            Version: {fileContents.version}
+                          </Typography>
+                          <Typography variant="body2">
+                            Tasks: {fileContents.tasks?.length || 0}
+                          </Typography>
+                          {fileContents.description && (
+                            <Typography variant="body2">
+                              Description: {fileContents.description}
+                            </Typography>
                           )}
                         </Box>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography variant="body2" component="span">
-                            {formatDate(backup.timestamp)} • {formatBytes(backup.size)} • {backup.taskCount} tasks
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {backup.description}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <ListItemSecondaryAction>
-                      <Tooltip title="Delete backup history">
-                        <IconButton 
-                          edge="end" 
-                          onClick={() => {
-                            setSelectedBackupId(backup.id);
-                            handleConfirmDialogOpen('delete', backup.id);
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </Paper>
+                      </Box>
+                    )}
+                    
+                    <Box sx={{ mt: 2 }}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setFileContents(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                        sx={{ mr: 1 }}
+                      >
+                        Remove
+                      </Button>
+                      
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleConfirmDialogOpen('restore')}
+                        disabled={!fileContents || isRestoreLoading}
+                      >
+                        {isRestoreLoading ? (
+                          <>
+                            <CircularProgress size={16} sx={{ mr: 1 }} />
+                            Restoring...
+                          </>
+                        ) : 'Restore Now'}
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box>
+                    <CloudUpload color="action" sx={{ fontSize: 40, mb: 1 }} />
+                    <Typography variant="subtitle1" gutterBottom>
+                      Drop your backup file here
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      or
+                    </Typography>
+                    <Button 
+                      variant="outlined" 
+                      onClick={handleFileInputClick}
+                    >
+                      Select Backup File
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+              
+              <Alert severity="warning">
+                <Typography variant="body2">
+                  Restoring a backup will overwrite your current data. Make sure to create a backup of your current data first.
+                </Typography>
+              </Alert>
+            </Paper>
+          </Grid>
+          
+          {/* Backup History Section */}
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <HistoryIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h5">
+                  Backup History
+                </Typography>
+              </Box>
+              
+              <Divider sx={{ mb: 2 }} />
+              
+              {backupHistory.length === 0 ? (
+                <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                  No backup history available
+                </Typography>
+              ) : (
+                <List>
+                  {backupHistory.map(backup => (
+                    <ListItem 
+                      key={backup.id}
+                      sx={{ 
+                        mb: 1, 
+                        border: 1, 
+                        borderColor: 'divider', 
+                        borderRadius: 1
+                      }}
+                    >
+                      <ListItemIcon>
+                        {backup.location === 'cloud' ? <CloudIcon /> : <DataIcon />}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Typography variant="subtitle1">
+                              {backup.filename}
+                            </Typography>
+                            {backup.isAutoBackup && (
+                              <Chip 
+                                label="Auto" 
+                                size="small" 
+                                color="info" 
+                                sx={{ ml: 1 }}
+                              />
+                            )}
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography variant="body2" component="span">
+                              {formatDate(backup.timestamp)} • {formatBytes(backup.size)} • {backup.taskCount} tasks
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {backup.description}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                      <ListItemSecondaryAction>
+                        <Tooltip title="Delete backup history">
+                          <IconButton 
+                            edge="end" 
+                            onClick={() => {
+                              setSelectedBackupId(backup.id);
+                              handleConfirmDialogOpen('delete', backup.id);
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      </TabPanel>
+      
+      {/* Manual Backup tab content */}
+      <TabPanel value={activeTab} index={1}>
+        {/* Existing manual backup content */}
+      </TabPanel>
+      
+      {/* JSON Import/Export tab content */}
+      <TabPanel value={activeTab} index={2}>
+        <ImportExportPanel />
+      </TabPanel>
       
       {/* Confirmation Dialog */}
       {renderConfirmDialog()}

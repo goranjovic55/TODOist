@@ -29,11 +29,13 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { RootState, AppDispatch } from '../../stores/store';
 import { toggleNodeExpansion, setSelectedItem, resetFilters } from '../../stores/uiSlice';
-import { Project, Group, Task } from '../../stores/tasksSlice';
+import { Project, Group, Task as TaskType, updateTask } from '../../stores/tasksSlice';
 import { filterTasks, countTasksByStatus } from '../../utils/filterUtils';
+import Task from './Task';
+import { handleDragStart, handleDragOver, getTargetParentId, DragData, DraggableItem } from '../../utils/dragDropUtils';
 
 // Define a type for tree items (could be a project, group, or task)
-type TreeItem = Project | Group | Task;
+type TreeItem = Project | Group | TaskType;
 
 interface TreeNodeProps {
   item: TreeItem;
@@ -94,7 +96,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ item, depth }) => {
       return null;
     }
     
-    let tasksInScope: Task[] = [];
+    let tasksInScope: TaskType[] = [];
     
     // For projects, get all tasks in all child groups
     if (itemType === 'project') {
@@ -104,11 +106,11 @@ const TreeNode: React.FC<TreeNodeProps> = ({ item, depth }) => {
       
       tasksInScope = tasks.filter(t => 
         childGroupIds.includes(t.parentId || '')
-      );
+      ) as TaskType[];
     } 
     // For groups, get all tasks in this group
     else if (itemType === 'group') {
-      tasksInScope = tasks.filter(t => t.parentId === item.id);
+      tasksInScope = tasks.filter(t => t.parentId === item.id) as TaskType[];
     }
     
     return countTasksByStatus(tasksInScope);
@@ -124,6 +126,92 @@ const TreeNode: React.FC<TreeNodeProps> = ({ item, depth }) => {
     dispatch(setSelectedItem(item.id));
   };
   
+  // Handle drop events
+  const handleDrop = (event: React.DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    
+    // Get the drag data
+    const dragDataJson = event.dataTransfer.getData('application/json');
+    if (!dragDataJson) return;
+    
+    const dragData = JSON.parse(dragDataJson) as DragData;
+    
+    // Find the dragged item
+    let draggedItem: DraggableItem | undefined;
+    
+    switch (dragData.itemType) {
+      case 'task':
+        draggedItem = tasks.find(t => t.id === dragData.itemId);
+        break;
+      case 'group':
+        draggedItem = groups.find(g => g.id === dragData.itemId);
+        break;
+      case 'project':
+        draggedItem = projects.find(p => p.id === dragData.itemId);
+        break;
+    }
+    
+    if (!draggedItem) return;
+    
+    // Get the new parent ID
+    const newParentId = getTargetParentId(item);
+    
+    // Skip if parent hasn't changed
+    if (dragData.itemType !== 'project' && 'parentId' in draggedItem && draggedItem.parentId === newParentId) {
+      return;
+    }
+    
+    // Update the item with new parent
+    if (dragData.itemType === 'task' && newParentId) {
+      dispatch(updateTask({
+        id: dragData.itemId,
+        parentId: newParentId
+      }));
+    }
+    // Add similar handling for groups if needed
+  };
+  
+  // Handle drag starting from this node
+  const onDragStart = (event: React.DragEvent<HTMLElement>) => {
+    handleDragStart(event, item);
+  };
+  
+  // Handle dragover on this node
+  const onDragOver = (event: React.DragEvent<HTMLElement>) => {
+    handleDragOver(event, item);
+  };
+  
+  // If this is a task, render the Task component
+  if (itemType === 'task') {
+    return (
+      <>
+        <Task 
+          task={item as TaskType}
+          depth={depth}
+          hasChildren={hasChildren}
+          onToggleExpand={handleToggleExpand}
+          isExpanded={isExpanded}
+          onDrop={handleDrop}
+        />
+        
+        {hasChildren && isExpanded && (
+          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {children.map((child) => (
+                <TreeNode
+                  key={child.id}
+                  item={child}
+                  depth={depth + 1}
+                />
+              ))}
+            </List>
+          </Collapse>
+        )}
+      </>
+    );
+  }
+  
+  // Render project/group node
   return (
     <>
       <ListItem
@@ -134,6 +222,10 @@ const TreeNode: React.FC<TreeNodeProps> = ({ item, depth }) => {
           </IconButton>
         }
         sx={{ pl: depth * 2 }}
+        draggable={itemType !== 'project'} // Projects cannot be dragged
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDrop={handleDrop}
       >
         <ListItemButton
           selected={isSelected}
@@ -152,9 +244,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({ item, depth }) => {
               isExpanded ? <FolderOpenIcon /> : <FolderIcon />
             ) : (
               <TaskIcon color={
-                (item as Task).status === 'completed' ? 'success' :
-                (item as Task).status === 'blocked' ? 'error' :
-                (item as Task).status === 'in_progress' ? 'primary' :
+                (item as TaskType).status === 'completed' ? 'success' :
+                (item as TaskType).status === 'blocked' ? 'error' :
+                (item as TaskType).status === 'in_progress' ? 'primary' :
                 'default'
               } />
             )}
@@ -165,13 +257,13 @@ const TreeNode: React.FC<TreeNodeProps> = ({ item, depth }) => {
                 <Typography
                   variant="body2"
                   sx={{
-                    textDecoration: itemType === 'task' && (item as Task).status === 'completed'
+                    textDecoration: itemType === 'task' && (item as TaskType).status === 'completed'
                       ? 'line-through'
                       : 'none',
                     fontWeight: isSelected ? 'bold' : 'normal'
                   }}
                 >
-                  {item.name || (item as Task).title}
+                  {item.name || (item as TaskType).title}
                 </Typography>
                 
                 {itemType !== 'task' && taskCounts && taskCounts.total > 0 && (
@@ -195,11 +287,11 @@ const TreeNode: React.FC<TreeNodeProps> = ({ item, depth }) => {
             secondary={
               itemType === 'task' && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                  {(item as Task).priority === 'high' && (
+                  {(item as TaskType).priority === 'high' && (
                     <Chip size="small" label="High" color="error" 
                       variant="outlined" sx={{ height: 18, '& .MuiChip-label': { p: 0.5 } }} />
                   )}
-                  {(item as Task).tags.map(tag => (
+                  {(item as TaskType).tags.map(tag => (
                     <Chip
                       key={tag}
                       size="small"

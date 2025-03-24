@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -15,8 +15,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": "src"
+    "baseUrl": "src",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["cypress", "jest", "node"]
   },
-  "include": ["src"],
+  "include": ["src", "cypress", "*.ts"],
   "exclude": ["src/electron", "node_modules"]
 } 

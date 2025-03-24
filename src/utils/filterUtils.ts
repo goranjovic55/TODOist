@@ -8,78 +8,74 @@ import { TaskFilters } from '../stores/uiSlice';
  * @returns Filtered tasks array
  */
 export const filterTasks = (tasks: Task[], filters: TaskFilters): Task[] => {
-  if (!tasks || !filters) {
-    return tasks;
-  }
-  
   return tasks.filter(task => {
-    // Status filter
+    // Filter by status
     if (filters.status.length > 0 && !filters.status.includes(task.status)) {
       return false;
     }
     
-    // Priority filter
+    // Filter by priority
     if (filters.priority.length > 0 && !filters.priority.includes(task.priority)) {
       return false;
     }
     
-    // Project and group filters (parent ID)
-    if (
-      (filters.projectIds.length > 0 || filters.groupIds.length > 0) && 
-      !filters.groupIds.includes(task.parentId || '')
-    ) {
+    // Filter by parent group
+    if (filters.groupIds.length > 0 && (!task.parentId || !filters.groupIds.includes(task.parentId))) {
       return false;
     }
     
-    // Tags filter
+    // Filter by tags (any match)
     if (filters.tags.length > 0 && !task.tags.some(tag => filters.tags.includes(tag))) {
       return false;
     }
     
-    // Start date filters
-    if (task.startDate) {
-      const startDate = new Date(task.startDate);
-      
-      // Start date from filter
-      if (filters.startDateFrom && new Date(filters.startDateFrom) > startDate) {
-        return false;
-      }
-      
-      // Start date to filter
-      if (filters.startDateTo && new Date(filters.startDateTo) < startDate) {
-        return false;
-      }
-    }
-    
-    // End date filters
-    if (task.endDate) {
-      const endDate = new Date(task.endDate);
-      
-      // End date from filter
-      if (filters.endDateFrom && new Date(filters.endDateFrom) > endDate) {
-        return false;
-      }
-      
-      // End date to filter
-      if (filters.endDateTo && new Date(filters.endDateTo) < endDate) {
-        return false;
-      }
-    }
-    
-    // Search text filter
+    // Filter by search text
     if (filters.searchText) {
-      const searchText = filters.searchText.toLowerCase();
-      const titleMatch = task.title.toLowerCase().includes(searchText);
-      const descriptionMatch = task.description.toLowerCase().includes(searchText);
-      const tagMatch = task.tags.some(tag => tag.toLowerCase().includes(searchText));
-      const noteMatch = task.notes.some(note => note.content.toLowerCase().includes(searchText));
+      const searchLower = filters.searchText.toLowerCase();
+      const titleMatch = task.title.toLowerCase().includes(searchLower);
+      const descMatch = task.description.toLowerCase().includes(searchLower);
+      const tagMatch = task.tags.some(tag => tag.toLowerCase().includes(searchLower));
       
-      if (!(titleMatch || descriptionMatch || tagMatch || noteMatch)) {
+      if (!titleMatch && !descMatch && !tagMatch) {
         return false;
       }
     }
     
-    // If the task passed all filters, include it
+    // Filter by start date range
+    if (filters.startDateFrom && task.startDate) {
+      const startFrom = new Date(filters.startDateFrom);
+      const taskStart = new Date(task.startDate);
+      if (taskStart < startFrom) {
+        return false;
+      }
+    }
+    
+    if (filters.startDateTo && task.startDate) {
+      const startTo = new Date(filters.startDateTo);
+      const taskStart = new Date(task.startDate);
+      if (taskStart > startTo) {
+        return false;
+      }
+    }
+    
+    // Filter by end date range
+    if (filters.endDateFrom && task.endDate) {
+      const endFrom = new Date(filters.endDateFrom);
+      const taskEnd = new Date(task.endDate);
+      if (taskEnd < endFrom) {
+        return false;
+      }
+    }
+    
+    if (filters.endDateTo && task.endDate) {
+      const endTo = new Date(filters.endDateTo);
+      const taskEnd = new Date(task.endDate);
+      if (taskEnd > endTo) {
+        return false;
+      }
+    }
+    
+    // Task passed all filters
     return true;
   });
 };
@@ -99,7 +95,7 @@ export const countTasksByStatus = (tasks: Task[]) => {
   };
   
   tasks.forEach(task => {
-    counts[task.status] += 1;
+    counts[task.status]++;
   });
   
   return counts;
@@ -143,4 +139,53 @@ export const getTaskStatistics = (tasks: Task[]) => {
     highPriorityTasks: highPriorityTasks.length,
     completionRate: tasks.length > 0 ? statusCounts.completed / tasks.length : 0
   };
+};
+
+// Sort tasks by various criteria
+export enum SortCriteria {
+  PRIORITY = 'priority',
+  DUE_DATE = 'dueDate',
+  CREATED_DATE = 'createdDate',
+  TITLE = 'title',
+  STATUS = 'status'
+}
+
+interface SortOptions {
+  criteria: SortCriteria;
+  ascending: boolean;
+}
+
+export const sortTasks = (tasks: Task[], options: SortOptions): Task[] => {
+  const { criteria, ascending } = options;
+  const multiplier = ascending ? 1 : -1;
+  
+  return [...tasks].sort((a, b) => {
+    switch (criteria) {
+      case SortCriteria.PRIORITY: {
+        const priorityMap = { high: 0, medium: 1, low: 2 };
+        return multiplier * (priorityMap[a.priority] - priorityMap[b.priority]);
+      }
+      
+      case SortCriteria.DUE_DATE: {
+        if (!a.endDate && !b.endDate) return 0;
+        if (!a.endDate) return multiplier * 1;
+        if (!b.endDate) return multiplier * -1;
+        return multiplier * (new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+      }
+      
+      case SortCriteria.CREATED_DATE:
+        return multiplier * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      
+      case SortCriteria.TITLE:
+        return multiplier * a.title.localeCompare(b.title);
+      
+      case SortCriteria.STATUS: {
+        const statusMap = { blocked: 0, in_progress: 1, not_started: 2, completed: 3 };
+        return multiplier * (statusMap[a.status] - statusMap[b.status]);
+      }
+      
+      default:
+        return 0;
+    }
+  });
 }; 

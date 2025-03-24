@@ -26,6 +26,7 @@ export interface Task {
   priority: 'low' | 'medium' | 'high';
   startDate?: Date;
   endDate?: Date;
+  completedAt?: Date;
   parentId?: string;
   tags: string[];
   attachments: Attachment[];
@@ -59,6 +60,8 @@ interface TasksState {
   selectedItemId: string | null;
   loading: boolean;
   error: string | null;
+  lastImportDate: string | null;
+  lastExportDate: string | null;
 }
 
 // Get initial sample data
@@ -71,7 +74,9 @@ const initialState: TasksState = {
   tasks: sampleData.tasks,
   selectedItemId: null,
   loading: false,
-  error: null
+  error: null,
+  lastImportDate: null,
+  lastExportDate: null
 };
 
 // Create the tasks slice
@@ -157,7 +162,7 @@ const tasksSlice = createSlice({
     },
     
     // Task actions
-    addTask: (state, action: PayloadAction<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'attachments' | 'notes' | 'tags'>>) => {
+    addTask: (state, action: PayloadAction<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'attachments' | 'notes' | 'tags' | 'completedAt'>>) => {
       const newTask: Task = {
         id: uuidv4(),
         ...action.payload,
@@ -173,11 +178,33 @@ const tasksSlice = createSlice({
     updateTask: (state, action: PayloadAction<Partial<Task> & { id: string }>) => {
       const index = state.tasks.findIndex(t => t.id === action.payload.id);
       if (index !== -1) {
-        state.tasks[index] = {
-          ...state.tasks[index],
-          ...action.payload,
-          updatedAt: new Date()
-        };
+        // If status is changing to completed, set completedAt
+        if (action.payload.status === 'completed' && state.tasks[index].status !== 'completed') {
+          state.tasks[index] = {
+            ...state.tasks[index],
+            ...action.payload,
+            completedAt: new Date(),
+            updatedAt: new Date()
+          };
+        } 
+        // If status is changing from completed to something else, remove completedAt
+        else if (state.tasks[index].status === 'completed' && action.payload.status && action.payload.status !== 'completed') {
+          const updatedTask = {
+            ...state.tasks[index],
+            ...action.payload,
+            updatedAt: new Date()
+          };
+          delete updatedTask.completedAt;
+          state.tasks[index] = updatedTask;
+        }
+        // Otherwise just update normally
+        else {
+          state.tasks[index] = {
+            ...state.tasks[index],
+            ...action.payload,
+            updatedAt: new Date()
+          };
+        }
       }
     },
     
@@ -231,6 +258,52 @@ const tasksSlice = createSlice({
       }
     },
     
+    // Special action just for updating task status with tracking
+    updateTaskStatus: (state, action: PayloadAction<{ id: string, status: Task['status'] }>) => {
+      const index = state.tasks.findIndex(t => t.id === action.payload.id);
+      if (index !== -1) {
+        // If transitioning to completed, set completedAt date
+        if (action.payload.status === 'completed' && state.tasks[index].status !== 'completed') {
+          state.tasks[index] = {
+            ...state.tasks[index],
+            status: action.payload.status,
+            completedAt: new Date(),
+            updatedAt: new Date()
+          };
+        }
+        // If transitioning from completed to another status, remove the completedAt date
+        else if (state.tasks[index].status === 'completed' && action.payload.status !== 'completed') {
+          const updatedTask = {
+            ...state.tasks[index],
+            status: action.payload.status,
+            updatedAt: new Date()
+          };
+          delete updatedTask.completedAt;
+          state.tasks[index] = updatedTask;
+        }
+        // Otherwise just update status
+        else {
+          state.tasks[index] = {
+            ...state.tasks[index],
+            status: action.payload.status,
+            updatedAt: new Date()
+          };
+        }
+      }
+    },
+    
+    // Import/Export actions
+    importData: (state, action: PayloadAction<{ projects: Project[], groups: Group[], tasks: Task[] }>) => {
+      state.projects = action.payload.projects;
+      state.groups = action.payload.groups;
+      state.tasks = action.payload.tasks;
+      state.lastImportDate = new Date().toISOString();
+    },
+    
+    setLastExportDate: (state) => {
+      state.lastExportDate = new Date().toISOString();
+    },
+    
     // Error handling
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
@@ -246,8 +319,9 @@ const tasksSlice = createSlice({
 export const { 
   addProject, updateProject, deleteProject,
   addGroup, updateGroup, deleteGroup,
-  addTask, updateTask, deleteTask,
+  addTask, updateTask, deleteTask, updateTaskStatus,
   setSelectedItem, addTaskAttachment, addTaskNote, updateTaskNote,
+  importData, setLastExportDate,
   setError, setLoading
 } = tasksSlice.actions;
 

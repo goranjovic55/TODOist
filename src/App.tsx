@@ -6,7 +6,7 @@ import AppHeader from './components/common/AppHeader';
 import TaskTreeView from './components/treeview/TaskTreeView';
 import TaskDetailsPanel from './components/panels/TaskDetailsPanel';
 import TimelinePanel from './components/panels/TimelinePanel';
-import TodoDashboard from './components/dashboard/TodoDashboard';
+import Dashboard from './components/dashboard/Dashboard';
 import CalendarView from './components/calendar/CalendarView';
 import ReportsView from './components/reports/ReportsView';
 import SearchPage from './components/search/SearchPage';
@@ -85,7 +85,7 @@ const App: React.FC = () => {
       </Box>
       
       <TabPanel value={activeTab} index={0}>
-        <TodoDashboard />
+        <Dashboard />
       </TabPanel>
       
       <TabPanel value={activeTab} index={1}>
