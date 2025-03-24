@@ -213,4 +213,29 @@
 
 ### Fixed
 - UI consistency for multi-view application interfaces
-- Drag and drop performance optimizations 
+- Drag and drop performance optimizations
+
+## [2.1.0] - 2023-08-25
+
+### Added
+- Goal Tracking System
+  - Create and manage long-term goals and objectives
+  - Link tasks to specific goals for progress tracking
+  - Automatic goal progress calculation based on linked tasks
+  - Goal categorization with customizable categories
+  - Visual progress indicators and deadlines
+  - Goal status management (active, completed, archived)
+  - Deadline visualization with warnings for approaching dates
+  - Goal dashboard with filterable views
+  - Category management with color coding
+
+### Improved
+- Task organization around strategic objectives
+- Productivity visualization with goal-oriented metrics
+- Long-term planning capabilities
+- User motivation through progress visualization
+- Structured approach to task management
+
+### Fixed
+- Various UI refinements in goal-related interfaces
+- Data persistence optimizations 
