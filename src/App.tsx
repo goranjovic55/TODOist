@@ -10,6 +10,7 @@ import TodoDashboard from './components/dashboard/TodoDashboard';
 import CalendarView from './components/calendar/CalendarView';
 import ReportsView from './components/reports/ReportsView';
 import SearchPage from './components/search/SearchPage';
+import TemplateLibrary from './components/templates/TemplateLibrary';
 
 // Tab panel component
 interface TabPanelProps {
@@ -65,6 +66,7 @@ const App: React.FC = () => {
           <Tab label="Calendar" id="app-tab-2" aria-controls="app-tabpanel-2" />
           <Tab label="Reports" id="app-tab-3" aria-controls="app-tabpanel-3" />
           <Tab label="Search" id="app-tab-4" aria-controls="app-tabpanel-4" />
+          <Tab label="Templates" id="app-tab-5" aria-controls="app-tabpanel-5" />
         </Tabs>
       </Box>
       
@@ -108,6 +110,12 @@ const App: React.FC = () => {
       <TabPanel value={activeTab} index={4}>
         <Box sx={{ height: '100%', overflow: 'auto' }}>
           <SearchPage />
+        </Box>
+      </TabPanel>
+      
+      <TabPanel value={activeTab} index={5}>
+        <Box sx={{ height: '100%', overflow: 'auto' }}>
+          <TemplateLibrary />
         </Box>
       </TabPanel>
     </Box>
