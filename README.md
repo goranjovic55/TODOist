@@ -1,64 +1,119 @@
-# TODOist
+# TODOist - Task Management Application
 
-A comprehensive task management application with hierarchical organization, rich content capabilities, and external service integrations.
+A comprehensive task management application with hierarchical organization for projects, groups, and tasks.
 
-## Project Overview
+## Features
 
-TODOist is a desktop task management application that allows users to organize tasks hierarchically with groups and projects. The application provides rich content attachment capabilities, schedule tracking, and integration with popular task services like Microsoft To-Do and Google Tasks.
+- **Hierarchical Organization**: Organize tasks into projects and groups
+- **Task Details**: Add descriptions, due dates, priorities, and tags to tasks
+- **Notifications**: Get alerts for upcoming deadlines and overdue tasks
+- **Timeline View**: Visualize tasks on a timeline
+- **Calendar View**: View tasks in a monthly calendar with upcoming tasks
+- **Dark/Light Mode**: Toggle between dark and light themes
+- **Responsive Design**: Works on desktop and mobile devices
+- **TODO Dashboard**: View pending, overdue, and upcoming tasks in an intuitive dashboard
+- **Git Integration**: Automatic commits to GitHub when milestones are completed
 
-### Key Features
+## Technology Stack
 
-- Hierarchical task organization with projects, groups, tasks, and steps
-- Drag and drop interface for intuitive task management
-- Rich content support for task documentation
-- Schedule tracking with notifications for overdue tasks
-- Integration with Microsoft To-Do and Google Tasks
-- Automated communication for delayed tasks
+- **Frontend**: React, TypeScript, Material-UI
+- **State Management**: Redux Toolkit with Redux Persist for local storage
+- **Desktop Application**: Electron
+- **Build Tools**: Webpack
+- **Version Control**: Automatic Git integration for milestone tracking
 
-## Getting Started
+## Setup Instructions
 
 ### Prerequisites
 
-- Node.js (v14+)
-- npm (v6+)
-- Git
+- Node.js (v14.0.0 or higher)
+- npm (v6.0.0 or higher)
+- Git (for automatic milestone commits)
 
 ### Installation
 
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/todoist.git
+   cd todoist
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+### Building for Production
+
+To build the application for production:
+
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/todoist.git
-cd todoist
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+npm run build
 ```
 
-## Development
+To package the application as a desktop app:
 
-This project is currently in the planning phase. See the [Project Index](project/INDEX.md) for a complete list of documentation and resources.
-
-### Project Structure
-
-```
-TODOist
-├── project/          # Project documentation and planning
-├── src/              # Source code (to be implemented)
-├── docs/             # User documentation
-├── settings/         # Project configuration
-└── scripts/          # Utility scripts
+```bash
+npm run package
 ```
 
-### Development Roadmap
+## Project Structure
 
-See the [Roadmap](project/ROADMAP.md) for the detailed development timeline.
+- `/src`: Source code
+  - `/components`: React components
+    - `/common`: Shared components
+    - `/dashboard`: Dashboard components including TODO view
+    - `/forms`: Form components
+    - `/panels`: Panel components
+    - `/treeview`: Tree view components
+    - `/calendar`: Calendar view components
+  - `/stores`: Redux state management
+  - `/styles`: Theme and styling
+  - `/utils`: Utility functions
+    - `gitUtils.ts`: Git integration utilities
+    - `filterUtils.ts`: Task filtering utilities
+    - `notifications.ts`: Notification utilities
+  - `/electron`: Electron main process files
+- `/public`: Static files
+- `/build`: Production build output
+
+## Calendar View
+
+The calendar view allows you to:
+
+- Visualize tasks on a monthly calendar
+- Quickly see due dates at a glance
+- View task details by hovering over tasks
+- Navigate between months
+- See upcoming tasks for the next two weeks
+- Identify task status and priority through colors
+
+## Git Integration
+
+TODOist automatically creates Git commits when significant milestones are achieved:
+
+- When all tasks in a group are completed
+- When project phases are completed
+- On major feature implementations
+
+This ensures your progress is automatically tracked and versioned, creating a clear history of your project development.
+
+## Planned Features
+
+- Integration with external services (Microsoft To-Do, Google Tasks)
+- Improved offline support
+- Data synchronization across devices
+- Enhanced reporting and visualization
+- Mobile applications
 
 ## Contributing
 
-Contribution guidelines will be established once the project enters active development. For now, please refer to the [Project Plan](project/PROJECT_PLAN.md) for understanding the project's direction.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 

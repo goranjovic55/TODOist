@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
+import { loadSampleData } from '../utils/sampleData';
 
 // Define the task interfaces
 export interface Attachment {
@@ -60,11 +61,14 @@ interface TasksState {
   error: string | null;
 }
 
+// Get initial sample data
+const sampleData = loadSampleData();
+
 // Initial state
 const initialState: TasksState = {
-  projects: [],
-  groups: [],
-  tasks: [],
+  projects: sampleData.projects,
+  groups: sampleData.groups,
+  tasks: sampleData.tasks,
   selectedItemId: null,
   loading: false,
   error: null

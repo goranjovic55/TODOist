@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -9,7 +9,8 @@ import {
   Switch,
   FormControlLabel,
   alpha,
-  styled
+  styled,
+  Tab
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -22,6 +23,9 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { RootState, AppDispatch } from '../../stores/store';
 import { setTheme, setSearchQuery } from '../../stores/uiSlice';
+import NotificationCenter from '../NotificationCenter';
+import TaskForm from '../forms/TaskForm';
+import TaskFilters from '../filters/TaskFilters';
 
 // Styled components
 const SearchContainer = styled('div')(({ theme }) => ({
@@ -66,6 +70,8 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 const AppHeader: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { theme, searchQuery } = useSelector((state: RootState) => state.ui);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   
   const handleThemeToggle = () => {
     dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'));
@@ -75,58 +81,109 @@ const AppHeader: React.FC = () => {
     dispatch(setSearchQuery(event.target.value));
   };
   
+  const handleNewTaskClick = () => {
+    setTaskFormOpen(true);
+  };
+  
+  const handleTaskFormClose = () => {
+    setTaskFormOpen(false);
+  };
+  
+  const handleFilterClick = () => {
+    setFilterDialogOpen(true);
+  };
+  
+  const handleFilterClose = () => {
+    setFilterDialogOpen(false);
+  };
+  
+  const handleNavigation = (index: number) => {
+    // Implement navigation logic based on the index
+    console.log(`Navigating to tab ${index}`);
+  };
+  
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography
-          variant="h6"
-          noWrap
-          component="div"
-          sx={{ display: { xs: 'none', sm: 'block' } }}
-        >
-          TODOist
-        </Typography>
-        
-        <SearchContainer>
-          <SearchIconWrapper>
-            <SearchIcon />
-          </SearchIconWrapper>
-          <StyledInputBase
-            placeholder="Search…"
-            inputProps={{ 'aria-label': 'search' }}
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-        </SearchContainer>
-        
-        <div style={{ flexGrow: 1 }} />
-        
-        <FormControlLabel
-          control={
-            <Switch
-              checked={theme === 'dark'}
-              onChange={handleThemeToggle}
-              icon={<LightModeIcon />}
-              checkedIcon={<DarkModeIcon />}
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ display: { xs: 'none', sm: 'block' } }}
+          >
+            TODOist
+          </Typography>
+          
+          <SearchContainer>
+            <SearchIconWrapper>
+              <SearchIcon />
+            </SearchIconWrapper>
+            <StyledInputBase
+              placeholder="Search…"
+              inputProps={{ 'aria-label': 'search' }}
+              value={searchQuery}
+              onChange={handleSearchChange}
             />
-          }
-          label=""
-        />
-        
-        <IconButton color="inherit" aria-label="filter tasks">
-          <FilterIcon />
-        </IconButton>
-        
-        <Button
-          variant="contained"
-          color="secondary"
-          startIcon={<AddIcon />}
-          sx={{ ml: 2 }}
-        >
-          New Task
-        </Button>
-      </Toolbar>
-    </AppBar>
+          </SearchContainer>
+          
+          <div style={{ flexGrow: 1 }} />
+          
+          <NotificationCenter />
+          
+          <FormControlLabel
+            control={
+              <Switch
+                checked={theme === 'dark'}
+                onChange={handleThemeToggle}
+                icon={<LightModeIcon />}
+                checkedIcon={<DarkModeIcon />}
+              />
+            }
+            label=""
+          />
+          
+          <IconButton 
+            color="inherit" 
+            aria-label="filter tasks"
+            onClick={handleFilterClick}
+          >
+            <FilterIcon />
+          </IconButton>
+          
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AddIcon />}
+            sx={{ ml: 2 }}
+            onClick={handleNewTaskClick}
+          >
+            New Task
+          </Button>
+          
+          <Tab
+            label="Calendar"
+            onClick={() => handleNavigation(2)}
+            sx={{ color: 'white' }}
+          />
+          <Tab
+            label="Reports"
+            onClick={() => handleNavigation(3)}
+            sx={{ color: 'white' }}
+          />
+        </Toolbar>
+      </AppBar>
+      
+      <TaskForm
+        open={taskFormOpen}
+        onClose={handleTaskFormClose}
+      />
+      
+      <TaskFilters
+        open={filterDialogOpen}
+        onClose={handleFilterClose}
+      />
+    </>
   );
 };
 

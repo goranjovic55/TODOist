@@ -1,5 +1,19 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+// Task filter interface
+export interface TaskFilters {
+  status: string[];
+  priority: string[];
+  projectIds: string[];
+  groupIds: string[];
+  tags: string[];
+  startDateFrom: string | null;
+  startDateTo: string | null;
+  endDateFrom: string | null;
+  endDateTo: string | null;
+  searchText: string;
+}
+
 // Define UI state interface
 export interface UiState {
   sidebarWidth: number;
@@ -8,16 +22,22 @@ export interface UiState {
   showCompletedTasks: boolean;
   expandedNodes: string[];
   searchQuery: string;
-  filterOptions: {
-    status: ('not_started' | 'in_progress' | 'completed' | 'blocked')[];
-    priority: ('low' | 'medium' | 'high')[];
-    tags: string[];
-    dateRange: {
-      start: Date | null;
-      end: Date | null;
-    };
-  };
+  filters: TaskFilters;
 }
+
+// Initial filter state
+const initialFilters: TaskFilters = {
+  status: [],
+  priority: [],
+  projectIds: [],
+  groupIds: [],
+  tags: [],
+  startDateFrom: null,
+  startDateTo: null,
+  endDateFrom: null,
+  endDateTo: null,
+  searchText: ''
+};
 
 // Initial state
 const initialState: UiState = {
@@ -27,15 +47,7 @@ const initialState: UiState = {
   showCompletedTasks: true, // Show completed tasks by default
   expandedNodes: [], // No nodes expanded by default
   searchQuery: '', // No search query by default
-  filterOptions: {
-    status: ['not_started', 'in_progress', 'completed', 'blocked'], // All statuses by default
-    priority: ['low', 'medium', 'high'], // All priorities by default
-    tags: [], // No tag filters by default
-    dateRange: {
-      start: null,
-      end: null
-    }
-  }
+  filters: initialFilters
 };
 
 // Create the UI slice
@@ -87,25 +99,48 @@ const uiSlice = createSlice({
       state.searchQuery = action.payload;
     },
     
-    setStatusFilter: (state, action: PayloadAction<('not_started' | 'in_progress' | 'completed' | 'blocked')[]>) => {
-      state.filterOptions.status = action.payload;
+    // Set all filters at once
+    setFilters: (state, action: PayloadAction<TaskFilters>) => {
+      state.filters = action.payload;
     },
     
-    setPriorityFilter: (state, action: PayloadAction<('low' | 'medium' | 'high')[]>) => {
-      state.filterOptions.priority = action.payload;
+    // Set individual filter options
+    setStatusFilter: (state, action: PayloadAction<string[]>) => {
+      state.filters.status = action.payload;
+    },
+    
+    setPriorityFilter: (state, action: PayloadAction<string[]>) => {
+      state.filters.priority = action.payload;
+    },
+    
+    setProjectFilter: (state, action: PayloadAction<string[]>) => {
+      state.filters.projectIds = action.payload;
+    },
+    
+    setGroupFilter: (state, action: PayloadAction<string[]>) => {
+      state.filters.groupIds = action.payload;
     },
     
     setTagsFilter: (state, action: PayloadAction<string[]>) => {
-      state.filterOptions.tags = action.payload;
+      state.filters.tags = action.payload;
     },
     
-    setDateRangeFilter: (state, action: PayloadAction<{ start: Date | null, end: Date | null }>) => {
-      state.filterOptions.dateRange = action.payload;
+    setStartDateRangeFilter: (state, action: PayloadAction<{ from: string | null, to: string | null }>) => {
+      state.filters.startDateFrom = action.payload.from;
+      state.filters.startDateTo = action.payload.to;
+    },
+    
+    setEndDateRangeFilter: (state, action: PayloadAction<{ from: string | null, to: string | null }>) => {
+      state.filters.endDateFrom = action.payload.from;
+      state.filters.endDateTo = action.payload.to;
+    },
+    
+    setSearchTextFilter: (state, action: PayloadAction<string>) => {
+      state.filters.searchText = action.payload;
     },
     
     resetFilters: (state) => {
-      state.filterOptions = initialState.filterOptions;
-      state.searchQuery = '';
+      state.filters = initialFilters;
     }
   }
 });
@@ -114,7 +149,9 @@ const uiSlice = createSlice({
 export const { 
   setSidebarWidth, setDetailsTabIndex, setTheme, setShowCompletedTasks,
   toggleNodeExpansion, expandAllNodes, collapseAllNodes,
-  setSearchQuery, setStatusFilter, setPriorityFilter, setTagsFilter, setDateRangeFilter,
+  setSearchQuery, setFilters, setStatusFilter, setPriorityFilter, 
+  setProjectFilter, setGroupFilter, setTagsFilter,
+  setStartDateRangeFilter, setEndDateRangeFilter, setSearchTextFilter,
   resetFilters
 } = uiSlice.actions;
 
