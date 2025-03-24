@@ -90,4 +90,29 @@
 
 ### Fixed
 - Various date formatting issues
-- UI responsiveness on different screen sizes 
+- UI responsiveness on different screen sizes
+
+## [1.6.0] - 2023-08-02
+
+### Added
+- Notifications System
+  - Real-time notifications for upcoming task deadlines
+  - System notifications for application updates
+  - Recurring task generation alerts
+  - Task update notifications
+  - Customizable notification preferences
+  - Desktop notification support
+  - Notification priority levels with visual indicators
+  - Notification center with filtering options
+  - Mark as read/unread functionality
+  - Notification actions for quick task interaction
+
+### Improved
+- User interface with notification badges
+- Task deadline awareness throughout the application
+- Settings management with dedicated notification preferences
+- Cross-component communication for notification generation
+
+### Fixed
+- Various minor UI inconsistencies
+- Date handling for notification timing 

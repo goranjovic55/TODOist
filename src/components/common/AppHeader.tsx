@@ -10,20 +10,24 @@ import {
   FormControlLabel,
   alpha,
   styled,
-  Tab
+  Tab,
+  Box
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
-  FilterList as FilterIcon
+  FilterList as FilterIcon,
+  Menu as MenuIcon,
+  AccountCircle,
+  Settings
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { RootState, AppDispatch } from '../../stores/store';
 import { setTheme, setSearchQuery } from '../../stores/uiSlice';
-import NotificationCenter from '../NotificationCenter';
+import NotificationCenter from '../notifications/NotificationCenter';
 import TaskForm from '../forms/TaskForm';
 import TaskFilters from '../filters/TaskFilters';
 
@@ -127,9 +131,14 @@ const AppHeader: React.FC = () => {
             />
           </SearchContainer>
           
-          <div style={{ flexGrow: 1 }} />
+          <Box sx={{ flexGrow: 1 }} />
           
-          <NotificationCenter />
+          <Box>
+            <NotificationCenter />
+            <IconButton color="inherit" aria-label="settings">
+              <Settings />
+            </IconButton>
+          </Box>
           
           <FormControlLabel
             control={
