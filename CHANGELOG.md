@@ -1,3 +1,5 @@
+## [Unreleased]
+
 # TODOist Changelog
 
 ## [1.0.0] - 2023-07-10
@@ -264,12 +266,13 @@
 - Visual display optimizations for different screen sizes
 - Data calculation efficiency for large task collections 
 
-## [Unreleased]
+## [0.1.2] - 2025-03-24
 
 
 ### Update
 - Automatic update from commit script
 ### Added
+- Test entry for changelog
 - Automation scripts for development workflow:
   - Automated commit workflow with smart file type detection
   - Changelog update script for easy documentation
