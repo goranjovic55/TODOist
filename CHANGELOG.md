@@ -187,4 +187,30 @@
 
 ### Fixed
 - Various UI refinements
-- Performance optimizations for timer accuracy 
+- Performance optimizations for timer accuracy
+
+## [2.0.0] - 2023-08-20
+
+### Added
+- Kanban Board View
+  - Visual task management with customizable columns
+  - Drag and drop interface for task organization
+  - Task status visualization across workflow stages
+  - Customizable columns with color coding
+  - Work-in-progress (WIP) limits for columns
+  - Column reordering capability
+  - Board persistence with localStorage
+  - Task cards with priority indicators and due dates
+  - Column management (add, edit, delete)
+  - Board settings customization
+
+### Improved
+- Task visualization and workflow management
+- Intuitive status transitions through drag-and-drop
+- Project management capabilities
+- Visual workflow representation
+- Productivity by limiting work-in-progress
+
+### Fixed
+- UI consistency for multi-view application interfaces
+- Drag and drop performance optimizations 
