@@ -14,6 +14,7 @@ import TemplateLibrary from './components/templates/TemplateLibrary';
 import RecurringTasksView from './components/recurring/RecurringTasksView';
 import IntegrationsPanel from './components/integrations/IntegrationsPanel';
 import BackupRestorePanel from './components/backup/BackupRestorePanel';
+import TimeTrackingPanel from './components/timeTracking/TimeTrackingPanel';
 
 // Tab panel component
 interface TabPanelProps {
@@ -73,6 +74,7 @@ const App: React.FC = () => {
           <Tab label="Recurring" id="app-tab-6" aria-controls="app-tabpanel-6" />
           <Tab label="Integrations" id="app-tab-7" aria-controls="app-tabpanel-7" />
           <Tab label="Backup & Restore" id="app-tab-8" aria-controls="app-tabpanel-8" />
+          <Tab label="Time Tracking" id="app-tab-9" aria-controls="app-tabpanel-9" />
         </Tabs>
       </Box>
       
@@ -140,6 +142,12 @@ const App: React.FC = () => {
       <TabPanel value={activeTab} index={8}>
         <Box sx={{ height: '100%', overflow: 'auto' }}>
           <BackupRestorePanel />
+        </Box>
+      </TabPanel>
+      
+      <TabPanel value={activeTab} index={9}>
+        <Box sx={{ height: '100%', overflow: 'auto' }}>
+          <TimeTrackingPanel />
         </Box>
       </TabPanel>
     </Box>

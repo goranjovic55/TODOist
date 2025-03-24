@@ -162,4 +162,29 @@
 
 ### Fixed
 - Edge cases in data persistence
-- Storage handling for larger datasets 
+- Storage handling for larger datasets
+
+## [1.9.0] - 2023-08-15
+
+### Added
+- Time Tracking & Pomodoro Timer System
+  - Track time spent on tasks with flexible timer
+  - Pomodoro technique implementation with customizable intervals
+  - Automatic break timing and session tracking
+  - Task association with time entries
+  - Detailed time entry history and filtering
+  - Daily tracking summaries
+  - Tagging system for time entries
+  - Customizable Pomodoro settings (work duration, break length, etc.)
+  - Audio notifications for session transitions
+  - Session notes and documentation
+
+### Improved
+- Task management with integrated time recording
+- Productivity facilitation through structured work sessions
+- User experience with visual time tracking
+- Data collection for productivity analytics
+
+### Fixed
+- Various UI refinements
+- Performance optimizations for timer accuracy 
