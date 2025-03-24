@@ -115,4 +115,27 @@
 
 ### Fixed
 - Various minor UI inconsistencies
-- Date handling for notification timing 
+- Date handling for notification timing
+
+## [1.7.0] - 2023-08-06
+
+### Added
+- Integrations System
+  - Connect with external task management services
+  - Multiple service integrations (Google Tasks, Microsoft To Do, GitHub, etc.)
+  - Customizable synchronization settings
+  - Configuration options for sync frequency and direction
+  - Manual and automated synchronization
+  - Task import/export capabilities
+  - Connection status monitoring
+  - Secure API credential management
+
+### Improved
+- Cross-platform task management
+- Data persistence between services
+- User interface for managing external connections
+- Task portability across platforms
+
+### Fixed
+- Task format inconsistencies between services
+- Synchronization conflict handling 
