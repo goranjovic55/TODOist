@@ -1,12 +1,18 @@
 ## [Unreleased]
 
+# TODOist Changelog
+
 ## [0.1.3] - 2025-03-24
 
-# TODOist Changelog
+### Fixed
+- Automatic commit script version ordering in changelog
+- Proper formatting of version sections
+- Version sorting logic to ensure chronological display
 
 ## [0.1.2] - 2025-03-24
 
 ### Update
+- Automatic update from commit script
 - Automatic update from commit script
 ### Added
 - Test entry for changelog

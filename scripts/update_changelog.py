@@ -8,9 +8,11 @@ import sys
 import os
 import re
 from datetime import datetime
+import semver
 
 CHANGELOG_FILE = "CHANGELOG.md"
 UNRELEASED_PATTERN = r"## \[Unreleased\]"
+VERSION_PATTERN = r"## \[(\d+\.\d+\.\d+(-\w+(\.\d+)?)?)\]"
 
 def get_changelog_content():
     """Read the current changelog content."""
@@ -79,7 +81,7 @@ def add_changelog_entry(category, description):
     return True
 
 def create_release(version):
-    """Convert Unreleased section to a release with version number and date."""
+    """Convert Unreleased section to a release with version number and date, ensuring proper version ordering."""
     content = get_changelog_content()
     if not content:
         print(f"Error: {CHANGELOG_FILE} not found")
@@ -94,24 +96,123 @@ def create_release(version):
     # Get today's date
     today = datetime.now().strftime("%Y-%m-%d")
     
-    # Replace [Unreleased] with [version] - date
-    start_pos = unreleased_match.start()
-    end_pos = unreleased_match.end()
+    # Extract the content from the Unreleased section
+    unreleased_content_start = unreleased_match.end()
     
-    new_header = f"## [{version}] - {today}"
-    updated_content = content[:start_pos] + new_header + content[end_pos:]
+    # Find where the next version header starts, if any
+    next_version_match = re.search(VERSION_PATTERN, content[unreleased_content_start:])
+    
+    if next_version_match:
+        unreleased_content_end = unreleased_content_start + next_version_match.start()
+    else:
+        unreleased_content_end = len(content)
+    
+    unreleased_content = content[unreleased_content_start:unreleased_content_end]
+    
+    # Remove the original unreleased section
+    content_without_unreleased = content[:unreleased_match.start()] + content[unreleased_content_end:]
+    
+    # Create the new version section
+    new_version_section = f"## [{version}] - {today}{unreleased_content}"
+    
+    # Find all existing versions to determine where to insert the new version
+    existing_versions = re.findall(VERSION_PATTERN, content_without_unreleased)
+    
+    # If there are existing versions, find the right place to insert the new version
+    if existing_versions:
+        # Try to parse the current version with semver
+        try:
+            curr_version = version
+            # Normalize versions to standard semver if needed
+            if not curr_version.startswith('v'):
+                curr_version = curr_version
+                
+            # Find the correct position to insert the new version
+            position_found = False
+            
+            for match in re.finditer(VERSION_PATTERN, content_without_unreleased):
+                existing_ver = match.group(1)
+                
+                # Check if the existing version is older than the current version
+                try:
+                    if semver.compare(curr_version, existing_ver) > 0:
+                        # Current version is newer, insert before this position
+                        position = match.start()
+                        content_without_unreleased = (
+                            content_without_unreleased[:position] + 
+                            new_version_section + 
+                            content_without_unreleased[position:]
+                        )
+                        position_found = True
+                        break
+                except:
+                    # If semver comparison fails, try simple string comparison
+                    if curr_version > existing_ver:
+                        position = match.start()
+                        content_without_unreleased = (
+                            content_without_unreleased[:position] + 
+                            new_version_section + 
+                            content_without_unreleased[position:]
+                        )
+                        position_found = True
+                        break
+                    
+            # If no position found, add to the end
+            if not position_found:
+                # Find the earliest position after the title/header
+                first_header_pos = content_without_unreleased.find('#')
+                if first_header_pos >= 0:
+                    title_end_pos = content_without_unreleased.find('\n', first_header_pos)
+                    if title_end_pos >= 0:
+                        content_without_unreleased = (
+                            content_without_unreleased[:title_end_pos+1] + 
+                            new_version_section + 
+                            content_without_unreleased[title_end_pos+1:]
+                        )
+                    else:
+                        content_without_unreleased += new_version_section
+                else:
+                    content_without_unreleased += new_version_section
+                        
+        except Exception as e:
+            # If there's any error with semver, just add after the unreleased section
+            print(f"Warning: Error parsing versions: {e}")
+            content_without_unreleased = (
+                content_without_unreleased[:unreleased_match.start()] + 
+                new_version_section + 
+                content_without_unreleased[unreleased_match.start():]
+            )
+    else:
+        # No existing versions, add after the title
+        first_header_pos = content_without_unreleased.find('#')
+        if first_header_pos >= 0:
+            title_end_pos = content_without_unreleased.find('\n', first_header_pos)
+            if title_end_pos >= 0:
+                content_without_unreleased = (
+                    content_without_unreleased[:title_end_pos+1] + 
+                    new_version_section + 
+                    content_without_unreleased[title_end_pos+1:]
+                )
+            else:
+                content_without_unreleased += new_version_section
+        else:
+            content_without_unreleased += new_version_section
     
     # Add a new Unreleased section at the top
     new_unreleased = f"## [Unreleased]\n\n"
-    insert_pos = content.find("#")
-    if insert_pos == -1:
-        insert_pos = 0
-    
-    updated_content = updated_content[:insert_pos] + new_unreleased + updated_content[insert_pos:]
+    first_header_pos = content_without_unreleased.find('#')
+    if first_header_pos >= 0:
+        content_with_unreleased = (
+            content_without_unreleased[:first_header_pos] + 
+            new_unreleased + 
+            content_without_unreleased[first_header_pos:]
+        )
+    else:
+        content_with_unreleased = new_unreleased + content_without_unreleased
     
     # Write back to the file
     with open(CHANGELOG_FILE, "w", encoding="utf-8") as file:
-        file.write(updated_content)
+        file.write(content_with_unreleased)
     
     print(f"Created release version {version} dated {today} in {CHANGELOG_FILE}")
     return True
@@ -140,4 +241,4 @@ def main():
         print("  python update_changelog.py release \"version\"")
 
 if __name__ == "__main__":
-    main() 
+    main()
