@@ -11,6 +11,7 @@ import CalendarView from './components/calendar/CalendarView';
 import ReportsView from './components/reports/ReportsView';
 import SearchPage from './components/search/SearchPage';
 import TemplateLibrary from './components/templates/TemplateLibrary';
+import RecurringTasksView from './components/recurring/RecurringTasksView';
 
 // Tab panel component
 interface TabPanelProps {
@@ -67,6 +68,7 @@ const App: React.FC = () => {
           <Tab label="Reports" id="app-tab-3" aria-controls="app-tabpanel-3" />
           <Tab label="Search" id="app-tab-4" aria-controls="app-tabpanel-4" />
           <Tab label="Templates" id="app-tab-5" aria-controls="app-tabpanel-5" />
+          <Tab label="Recurring" id="app-tab-6" aria-controls="app-tabpanel-6" />
         </Tabs>
       </Box>
       
@@ -116,6 +118,12 @@ const App: React.FC = () => {
       <TabPanel value={activeTab} index={5}>
         <Box sx={{ height: '100%', overflow: 'auto' }}>
           <TemplateLibrary />
+        </Box>
+      </TabPanel>
+      
+      <TabPanel value={activeTab} index={6}>
+        <Box sx={{ height: '100%', overflow: 'auto' }}>
+          <RecurringTasksView />
         </Box>
       </TabPanel>
     </Box>
